@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
+import { hashToken } from '@/lib/token'
+import { getJstDateString } from '@/lib/jst'
+import { generateAiResult } from '@/lib/ai'
+import { TemplateField } from '@/lib/types'
+
+/**
+ * POST /api/checkin/submit
+ * body: { token: string, answers: Record<string, boolean|string>, memo: string }
+ *
+ * 処理フロー:
+ * 1. トークン検証
+ * 2. self_checks に upsert（冪等）
+ * 3. token の used_at を更新
+ * 4. checkin_thanks ジョブをキューに積む（非同期）
+ * 5. AI結果を返す
+ */
+export async function POST(req: NextRequest) {
+  const supabase = createServerClient()
+  const { token, answers, memo } = await req.json()
+
+  if (!token) {
+    return NextResponse.json({ error: 'token は必須' }, { status: 400 })
+  }
+
+  const token_hash = hashToken(token)
+  const now = new Date().toISOString()
+
+  // ---- 1. トークン検証 ----
+  const { data: tokenRow } = await supabase
+    .from('checkin_tokens')
+    .select('*')
+    .eq('token_hash', token_hash)
+    .single()
+
+  if (!tokenRow) {
+    return NextResponse.json({ error: 'invalid token' }, { status: 401 })
+  }
+  if (tokenRow.expires_at < now) {
+    return NextResponse.json({ error: 'token expired' }, { status: 401 })
+  }
+  if (tokenRow.used_at) {
+    return NextResponse.json({ error: 'token already used' }, { status: 409 })
+  }
+
+  // ---- 2. アクティブテンプレ取得 ----
+  const { data: template } = await supabase
+    .from('self_check_templates')
+    .select('*')
+    .eq('is_active', true)
+    .single()
+
+  if (!template) {
+    return NextResponse.json(
+      { error: 'アクティブなテンプレートがありません' },
+      { status: 503 }
+    )
+  }
+
+  // ---- 3. AI判定（ルール生成） ----
+  const fields: TemplateField[] = template.schema?.fields ?? []
+  const aiResult = generateAiResult(fields, answers ?? {}, memo ?? '')
+
+  // ---- 4. self_checks upsert（2重送信防止） ----
+  const date = getJstDateString()
+  const { data: check, error: checkError } = await supabase
+    .from('self_checks')
+    .upsert(
+      {
+        streamer_id: tokenRow.streamer_id,
+        date,
+        template_id: template.id,
+        answers: answers ?? {},
+        memo: memo ?? null,
+        overall_score: aiResult.overall_score,
+        ai_type: aiResult.ai_type,
+        ai_comment: aiResult.ai_comment,
+        ai_next_action: aiResult.ai_next_action,
+        ai_negative_detected: aiResult.ai_negative_detected,
+      },
+      { onConflict: 'streamer_id,date', ignoreDuplicates: false }
+    )
+    .select()
+    .single()
+
+  if (checkError) {
+    // LINEの失敗でも入力は成功させるため、ここで return はしない
+    console.error('self_checks upsert error:', checkError)
+  }
+
+  // ---- 5. token を使用済みにする ----
+  await supabase
+    .from('checkin_tokens')
+    .update({ used_at: now })
+    .eq('id', tokenRow.id)
+
+  // ---- 6. checkin_thanks ジョブをキューに積む（冪等） ----
+  await supabase
+    .from('line_jobs')
+    .upsert(
+      {
+        streamer_id: tokenRow.streamer_id,
+        date,
+        kind: 'checkin_thanks',
+        status: 'queued',
+        attempts: 0,
+      },
+      { onConflict: 'streamer_id,date,kind', ignoreDuplicates: true }
+    )
+
+  return NextResponse.json({
+    success: true,
+    ai_type: aiResult.ai_type,
+    ai_comment: aiResult.ai_comment,
+    ai_next_action: aiResult.ai_next_action,
+    ai_negative_detected: aiResult.ai_negative_detected,
+    overall_score: aiResult.overall_score,
+  })
+}
