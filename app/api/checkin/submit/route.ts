@@ -4,6 +4,7 @@ import { hashToken } from '@/lib/token'
 // getJstDateString は不要: トークンに紐づく date を使用する
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
+import { checkinSubmitSchema, parseBody } from '@/lib/validations'
 
 /**
  * POST /api/checkin/submit
@@ -18,11 +19,10 @@ import { TemplateField } from '@/lib/types'
  */
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
-  const { token, answers, memo } = await req.json()
 
-  if (!token) {
-    return NextResponse.json({ error: 'token は必須' }, { status: 400 })
-  }
+  const parsed = parseBody(checkinSubmitSchema, await req.json())
+  if (!parsed.success) return parsed.error
+  const { token, answers, memo } = parsed.data
 
   const token_hash = hashToken(token)
   const now = new Date().toISOString()
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
   // ---- 3. AI判定（ルール生成） ----
   const fields: TemplateField[] = template.schema?.fields ?? []
-  const aiResult = generateAiResult(fields, answers ?? {}, memo ?? '')
+  const aiResult = generateAiResult(fields, answers, memo ?? '')
 
   // ---- 4. self_checks upsert（トークンに紐づく営業日を使用） ----
   const date: string = tokenRow.date
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         streamer_id: tokenRow.streamer_id,
         date,
         template_id: template.id,
-        answers: answers ?? {},
+        answers,
         memo: memo ?? null,
         overall_score: aiResult.overall_score,
         ai_type: aiResult.ai_type,

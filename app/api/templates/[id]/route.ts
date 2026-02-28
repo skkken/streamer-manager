@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { TemplateSchema } from '@/lib/types'
 import { requireAuth } from '@/lib/auth-guard'
+import { updateTemplateSchema, templateSchemaSchema, parseBody } from '@/lib/validations'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -31,21 +31,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const supabase = createServerClient()
   const { id } = await params
-  const body = await req.json()
-  const { name, for_level, schema_json, is_active } = body
+
+  const parsed = parseBody(updateTemplateSchema, await req.json())
+  if (!parsed.success) return parsed.error
+
+  const { name, for_level, schema_json, is_active } = parsed.data
 
   const updates: Record<string, unknown> = {}
   if (name !== undefined) updates.name = name
   if (for_level !== undefined) updates.for_level = for_level
   if (is_active !== undefined) updates.is_active = is_active
   if (schema_json !== undefined) {
-    let schema: TemplateSchema
+    let rawSchema: unknown
     try {
-      schema = JSON.parse(schema_json)
+      rawSchema = JSON.parse(schema_json)
     } catch {
       return NextResponse.json({ error: 'JSON パース失敗' }, { status: 400 })
     }
-    updates.schema = schema
+    const schemaParsed = parseBody(templateSchemaSchema, rawSchema)
+    if (!schemaParsed.success) return schemaParsed.error
+    updates.schema = schemaParsed.data
   }
 
   const { data, error } = await supabase

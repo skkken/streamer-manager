@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { updateStreamerSchema, parseBody } from '@/lib/validations'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -30,17 +31,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const supabase = createServerClient()
   const { id } = await params
-  const body = await req.json()
 
-  const allowedFields = ['display_name', 'status', 'line_user_id', 'tiktok_id', 'agency_name', 'manager_name', 'notify_enabled', 'level_override', 'notes']
-  const updates: Record<string, unknown> = {}
-  for (const key of allowedFields) {
-    if (key in body) updates[key] = body[key]
-  }
+  const parsed = parseBody(updateStreamerSchema, await req.json())
+  if (!parsed.success) return parsed.error
 
   const { data, error } = await supabase
     .from('streamers')
-    .update(updates)
+    .update(parsed.data)
     .eq('id', id)
     .select()
     .single()

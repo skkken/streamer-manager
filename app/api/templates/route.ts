@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { TemplateSchema } from '@/lib/types'
 import { requireAuth } from '@/lib/auth-guard'
+import { createTemplateSchema, templateSchemaSchema, parseBody } from '@/lib/validations'
 
 export async function GET() {
   const { errorResponse } = await requireAuth()
@@ -24,24 +24,25 @@ export async function POST(req: NextRequest) {
   if (postAuthErr) return postAuthErr
 
   const supabase = createServerClient()
-  const body = await req.json()
 
-  const { name, for_level, schema_json } = body
+  const parsed = parseBody(createTemplateSchema, await req.json())
+  if (!parsed.success) return parsed.error
 
-  if (!name || !schema_json) {
-    return NextResponse.json({ error: 'name と schema_json は必須' }, { status: 400 })
-  }
+  const { name, for_level, schema_json } = parsed.data
 
-  let schema: TemplateSchema
+  let schema: unknown
   try {
     schema = JSON.parse(schema_json)
   } catch {
     return NextResponse.json({ error: 'JSON パース失敗' }, { status: 400 })
   }
 
+  const schemaParsed = parseBody(templateSchemaSchema, schema)
+  if (!schemaParsed.success) return schemaParsed.error
+
   const { data, error } = await supabase
     .from('self_check_templates')
-    .insert({ name, for_level: for_level ?? 1, schema })
+    .insert({ name, for_level: for_level ?? 1, schema: schemaParsed.data })
     .select()
     .single()
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { createStreamerSchema, parseBody } from '@/lib/validations'
 
 // GET /api/streamers  — 一覧取得
 export async function GET(req: NextRequest) {
@@ -33,12 +34,17 @@ export async function POST(req: NextRequest) {
   const { errorResponse } = await requireAuth()
   if (errorResponse) return errorResponse
 
-  let body: Record<string, unknown>
+  let body: unknown
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 })
   }
+
+  const parsed = parseBody(createStreamerSchema, body)
+  if (!parsed.success) return parsed.error
+
+  const { display_name, line_user_id, agency_name, tiktok_id, manager_name, status, notify_enabled, notes } = parsed.data
 
   let supabase: ReturnType<typeof createServerClient>
   try {
@@ -47,15 +53,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : 'Supabase 設定エラー' },
       { status: 503 }
-    )
-  }
-
-  const { display_name, line_user_id, agency_name, tiktok_id, manager_name, status, notify_enabled, notes } = body
-
-  if (!display_name || !line_user_id) {
-    return NextResponse.json(
-      { error: 'display_name と line_user_id は必須です' },
-      { status: 400 }
     )
   }
 

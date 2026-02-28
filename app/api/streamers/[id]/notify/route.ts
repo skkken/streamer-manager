@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { notifyToggleSchema, parseBody } from '@/lib/validations'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -15,11 +16,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const supabase = createServerClient()
   const { id } = await params
-  const { notify_enabled } = await req.json()
 
-  if (typeof notify_enabled !== 'boolean') {
-    return NextResponse.json({ error: 'notify_enabled (boolean) は必須' }, { status: 400 })
-  }
+  const parsed = parseBody(notifyToggleSchema, await req.json())
+  if (!parsed.success) return parsed.error
+  const { notify_enabled } = parsed.data
 
   const { data, error } = await supabase
     .from('streamers')

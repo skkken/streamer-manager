@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { registerLineUserSchema, parseBody } from '@/lib/validations'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -15,12 +16,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const supabase = createServerClient()
   const { id } = await params
-  const body = await req.json()
-  const { display_name, tiktok_id, office_name, agency_name, manager_name } = body
 
-  if (!display_name?.trim()) {
-    return NextResponse.json({ error: '名前は必須です' }, { status: 400 })
-  }
+  const parsed = parseBody(registerLineUserSchema, await req.json())
+  if (!parsed.success) return parsed.error
+  const { display_name, tiktok_id, office_name, agency_name, manager_name } = parsed.data
 
   // 登録待ちレコード取得
   const { data: reg, error: regErr } = await supabase

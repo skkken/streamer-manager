@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { messageSettingsSchema, parseBody } from '@/lib/validations'
 
 // GET /api/message-settings
 export async function GET() {
@@ -28,18 +29,13 @@ export async function PATCH(req: NextRequest) {
   const { errorResponse: patchAuthErr } = await requireAuth()
   if (patchAuthErr) return patchAuthErr
 
-  let body: { key: string; value: string }[]
-  try {
-    body = await req.json()
-    if (!Array.isArray(body)) throw new Error()
-  } catch {
-    return NextResponse.json({ error: 'body must be an array' }, { status: 400 })
-  }
+  const parsed = parseBody(messageSettingsSchema, await req.json())
+  if (!parsed.success) return parsed.error
 
   try {
     const supabase = createServerClient()
     const now = new Date().toISOString()
-    const rows = body.map(({ key, value }) => ({ key, value, updated_at: now }))
+    const rows = parsed.data.map(({ key, value }) => ({ key, value, updated_at: now }))
     const { error } = await supabase
       .from('message_settings')
       .upsert(rows, { onConflict: 'key' })

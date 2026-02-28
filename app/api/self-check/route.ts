@@ -5,6 +5,7 @@ import { hashToken } from '@/lib/token'
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
+import { selfCheckSubmitSchema, parseBody } from '@/lib/validations'
 
 /**
  * POST /api/self-check
@@ -28,24 +29,19 @@ import { getMessageSettings } from '@/lib/messages'
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
 
-  let body: Record<string, unknown>
+  let body: unknown
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 })
   }
 
-  const { token, answers, memo, diamonds, streaming_minutes } = body
+  const parsed = parseBody(selfCheckSubmitSchema, body)
+  if (!parsed.success) return parsed.error
 
-  if (!token) {
-    return NextResponse.json({ error: 'token は必須' }, { status: 400 })
-  }
-  if (typeof diamonds !== 'number' || !Number.isFinite(diamonds) || diamonds < 0) {
-    return NextResponse.json({ error: 'diamonds は 0 以上の数値が必須です' }, { status: 400 })
-  }
-  const streamingMinutesNum = typeof streaming_minutes === 'number' && streaming_minutes >= 0 ? streaming_minutes : 0
+  const { token, answers, memo, diamonds, streaming_minutes: streamingMinutesNum } = parsed.data
 
-  const tokenHash = hashToken(token as string)
+  const tokenHash = hashToken(token)
   const now = new Date().toISOString()
 
   // ---- 2. トークン検証 ----
@@ -98,8 +94,8 @@ export async function POST(req: NextRequest) {
   const messages = await getMessageSettings()
   const aiResult = generateAiResult(
     fields,
-    (answers as Record<string, boolean | string>) ?? {},
-    (memo as string) ?? '',
+    answers,
+    memo ?? '',
     messages
   )
 
@@ -111,7 +107,7 @@ export async function POST(req: NextRequest) {
         streamer_id: streamerId,
         date,
         template_id: template.id,
-        answers: answers ?? {},
+        answers,
         memo: memo ?? null,
         overall_score: aiResult.overall_score,
         ai_type: aiResult.ai_type,

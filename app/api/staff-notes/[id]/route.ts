@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { updateStaffNoteSchema, parseBody } from '@/lib/validations'
 
 // PATCH /api/staff-notes/[id]
 export async function PATCH(
@@ -12,13 +13,13 @@ export async function PATCH(
 
   const supabase = createServerClient()
   const { id } = await params
-  const body = await req.json()
 
-  const { date, category, current_state, action, next_action, status } = body
+  const parsed = parseBody(updateStaffNoteSchema, await req.json())
+  if (!parsed.success) return parsed.error
 
   const { data, error } = await supabase
     .from('staff_notes')
-    .update({ date, category, current_state, action, next_action, status })
+    .update(parsed.data)
     .eq('id', id)
     .select()
     .single()

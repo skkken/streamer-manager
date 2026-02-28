@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { createStaffNoteSchema, parseBody } from '@/lib/validations'
 
 // GET /api/staff-notes?streamer_id=xxx
 export async function GET(req: NextRequest) {
@@ -33,13 +34,11 @@ export async function POST(req: NextRequest) {
   if (postAuthErr) return postAuthErr
 
   const supabase = createServerClient()
-  const body = await req.json()
 
-  const { streamer_id, date, category, current_state, action, next_action, status } = body
+  const parsed = parseBody(createStaffNoteSchema, await req.json())
+  if (!parsed.success) return parsed.error
 
-  if (!streamer_id || !date) {
-    return NextResponse.json({ error: 'streamer_id と date は必須' }, { status: 400 })
-  }
+  const { streamer_id, date, category, current_state, action, next_action, status } = parsed.data
 
   const { data, error } = await supabase
     .from('staff_notes')

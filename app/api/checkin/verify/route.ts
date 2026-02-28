@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { hashToken } from '@/lib/token'
 // getJstDateString は不要: トークンに紐づく date を使用する
+import { checkinVerifySchema, parseBody } from '@/lib/validations'
 
 /**
  * POST /api/checkin/verify
@@ -10,11 +11,10 @@ import { hashToken } from '@/lib/token'
  */
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
-  const { token } = await req.json()
 
-  if (!token) {
-    return NextResponse.json({ valid: false, error: 'token は必須' }, { status: 400 })
-  }
+  const parsed = parseBody(checkinVerifySchema, await req.json())
+  if (!parsed.success) return parsed.error
+  const { token } = parsed.data
 
   const token_hash = hashToken(token)
   const now = new Date().toISOString()

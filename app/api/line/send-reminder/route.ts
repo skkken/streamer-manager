@@ -5,6 +5,7 @@ import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
 import { requireAuth } from '@/lib/auth-guard'
+import { sendReminderSchema, parseBody } from '@/lib/validations'
 
 /**
  * POST /api/line/send-reminder
@@ -18,19 +19,12 @@ export async function POST(req: NextRequest) {
   if (errorResponse) return errorResponse
 
   try {
-    const { streamer_ids, date: requestDate } = (await req.json()) as {
-      streamer_ids: string[]
-      date?: string
-    }
+    const parsed = parseBody(sendReminderSchema, await req.json())
+    if (!parsed.success) return parsed.error
 
-    if (!streamer_ids?.length) {
-      return NextResponse.json({ error: '配信者が指定されていません' }, { status: 400 })
-    }
+    const { streamer_ids, date: requestDate } = parsed.data
 
-    // 日付バリデーション（YYYY-MM-DD形式）
-    const targetDate = requestDate && /^\d{4}-\d{2}-\d{2}$/.test(requestDate)
-      ? requestDate
-      : getJstDateString()
+    const targetDate = requestDate ?? getJstDateString()
 
     const supabase = createServerClient()
     const messages = await getMessageSettings()
