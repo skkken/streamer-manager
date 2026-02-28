@@ -201,7 +201,7 @@ export default function StreamerDetailClient({
         current_state: '',
         action: '',
         next_action: '',
-        status: 'open',
+        status: 'preparing',
       })
     } catch (_e) {
       setSubmitError('追加に失敗しました')
