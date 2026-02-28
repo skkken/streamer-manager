@@ -9,19 +9,27 @@ import { getMessageSettings } from '@/lib/messages'
  * POST /api/line/send-reminder
  *
  * 未回答の配信者に手動でリマインドを送信する
- * Body: { streamer_ids: string[] }
+ * Body: { streamer_ids: string[], date?: string }
+ * date を指定すると過去の未入力日分のトークンを発行できる
  */
 export async function POST(req: NextRequest) {
-  const { streamer_ids } = (await req.json()) as { streamer_ids: string[] }
+  const { streamer_ids, date: requestDate } = (await req.json()) as {
+    streamer_ids: string[]
+    date?: string
+  }
 
   if (!streamer_ids?.length) {
     return NextResponse.json({ error: '配信者が指定されていません' }, { status: 400 })
   }
 
+  // 日付バリデーション（YYYY-MM-DD形式）
+  const targetDate = requestDate && /^\d{4}-\d{2}-\d{2}$/.test(requestDate)
+    ? requestDate
+    : getJstDateString()
+
   const supabase = createServerClient()
   const messages = await getMessageSettings()
-  const today = getJstDateString()
-  const expiresAt = getTokenExpiry(today).toISOString()
+  const expiresAt = getTokenExpiry(targetDate).toISOString()
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -56,7 +64,7 @@ export async function POST(req: NextRequest) {
       .upsert(
         {
           streamer_id: streamer.id,
-          date: today,
+          date: targetDate,
           token_hash: tokenHash,
           expires_at: expiresAt,
           used_at: null,
@@ -65,12 +73,15 @@ export async function POST(req: NextRequest) {
       )
 
     const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
-    const text = (
-      messages.line_checkin_reminder ??
-      '【リマインド】\n{name}さん、本日の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは本日中のみ有効です。'
-    )
+    const today = getJstDateString()
+    const isToday = targetDate === today
+    const defaultMsg = isToday
+      ? '【リマインド】\n{name}さん、本日の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは翌日昼まで有効です。'
+      : '【リマインド】\n{name}さん、{date}の自己評価が未入力です。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは翌日昼まで有効です。'
+    const text = (messages.line_checkin_reminder ?? defaultMsg)
       .replace('{name}', streamer.display_name)
       .replace('{url}', checkinUrl)
+      .replace('{date}', targetDate)
 
     const result = await sendLineMessage(streamer.line_user_id, [
       { type: 'text', text },

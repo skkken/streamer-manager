@@ -17,15 +17,18 @@ type StreamerRow = {
 
 export default function NotificationsClient({
   today,
+  targetDate,
   streamers,
 }: {
   today: string
+  targetDate: string
   streamers: StreamerRow[]
 }) {
   const router = useRouter()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<string | null>(null)
+  const isToday = targetDate === today
 
   const submitted = streamers.filter((s) => s.submitted)
   const notSubmitted = streamers.filter((s) => !s.submitted)
@@ -54,7 +57,7 @@ export default function NotificationsClient({
       const res = await fetch('/api/line/send-reminder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ streamer_ids: Array.from(selected) }),
+        body: JSON.stringify({ streamer_ids: Array.from(selected), date: targetDate }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -74,8 +77,40 @@ export default function NotificationsClient({
     }
   }
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value
+    if (newDate) {
+      router.push(`/admin/notifications?date=${newDate}`)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* 日付セレクタ */}
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-medium text-gray-700">対象日:</label>
+        <input
+          type="date"
+          value={targetDate}
+          max={today}
+          onChange={handleDateChange}
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+        />
+        {!isToday && (
+          <button
+            onClick={() => router.push('/admin/notifications')}
+            className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+          >
+            今日に戻る
+          </button>
+        )}
+        {!isToday && (
+          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+            過去日のリマインド送信
+          </span>
+        )}
+      </div>
+
       {/* サマリー */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border px-4 py-3 bg-green-50 border-green-200 text-green-800">
@@ -98,7 +133,7 @@ export default function NotificationsClient({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-gray-800">
-                未回答者 — {today}（{notSubmitted.length}人）
+                未回答者 — {targetDate}（{notSubmitted.length}人）
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
                 チェックを入れてリマインド送信できます
@@ -184,7 +219,7 @@ export default function NotificationsClient({
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-gray-800">
-            回答済み — {today}（{submitted.length}人）
+            回答済み — {targetDate}（{submitted.length}人）
           </h2>
         </CardHeader>
         <div className="overflow-x-auto">

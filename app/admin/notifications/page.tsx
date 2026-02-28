@@ -34,13 +34,20 @@ async function getActiveStreamersWithCheckStatus(date: string) {
   }
 }
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>
+}) {
+  const { date: queryDate } = await searchParams
   const today = getJstDateString()
-  const streamers = await getActiveStreamersWithCheckStatus(today)
+  const targetDate =
+    queryDate && /^\d{4}-\d{2}-\d{2}$/.test(queryDate) ? queryDate : today
+  const streamers = await getActiveStreamersWithCheckStatus(targetDate)
 
   return (
     <AdminLayout title="通知ジョブ">
-      <NotificationsClient today={today} streamers={streamers} />
+      <NotificationsClient today={today} targetDate={targetDate} streamers={streamers} />
     </AdminLayout>
   )
 }
