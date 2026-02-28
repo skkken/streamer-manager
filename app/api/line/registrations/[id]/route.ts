@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
   const { id } = await params
   const body = await req.json()
-  const { display_name, tiktok_id, agency_name, manager_name } = body
+  const { display_name, tiktok_id, office_name, agency_name, manager_name } = body
 
   if (!display_name?.trim()) {
     return NextResponse.json({ error: '名前は必須です' }, { status: 400 })
@@ -38,8 +38,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     .insert({
       display_name: display_name.trim(),
       line_user_id: reg.line_user_id,
-      tiktok_id: tiktok_id?.trim() || null,
-      agency_name: agency_name?.trim() || null,
+      tiktok_id: tiktok_id?.trim() || reg.tiktok_id || null,
+      agency_name: office_name?.trim() || agency_name?.trim() || reg.office_name || null,
       manager_name: manager_name?.trim() || null,
       status: 'active',
       notify_enabled: true,
