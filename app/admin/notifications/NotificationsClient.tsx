@@ -174,7 +174,7 @@ export default function NotificationsClient({
                     }`}
                     onClick={() => s.has_line && toggleSelect(s.id)}
                   >
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.has(s.id)}
