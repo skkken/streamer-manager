@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
-import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
+import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const messages = await getMessageSettings()
   const today = getJstDateString()
-  const expiresAt = getJstEndOfDay(today).toISOString()
+  const expiresAt = getTokenExpiry(today).toISOString()
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL

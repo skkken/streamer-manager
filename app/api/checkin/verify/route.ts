@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { hashToken } from '@/lib/token'
-import { getJstDateString } from '@/lib/jst'
+// getJstDateString は不要: トークンに紐づく date を使用する
 
 /**
  * POST /api/checkin/verify
@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 既に今日の自己評価が存在するか確認
-  const date = getJstDateString()
+  // 既にトークンの営業日の自己評価が存在するか確認
+  const date: string = tokenRow.date
   const { data: existingCheck } = await supabase
     .from('self_checks')
     .select('id')

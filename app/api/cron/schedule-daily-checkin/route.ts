@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
-import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
+import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 
 /**
  * POST /api/cron/schedule-daily-checkin
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient()
   const date = getJstDateString()
-  const expiresAt = getJstEndOfDay(date).toISOString()
+  const expiresAt = getTokenExpiry(date).toISOString()
 
   // active + 通知有効な配信者を取得
   const { data: streamers, error: sErr } = await supabase

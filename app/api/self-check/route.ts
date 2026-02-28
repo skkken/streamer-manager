@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { hashToken } from '@/lib/token'
-import { getJstDateString } from '@/lib/jst'
+// getJstDateString は不要: トークンに紐づく date を使用する
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
 
   const streamerId = tokenRow.streamer_id
 
-  // ---- 3. JST日付 ----
-  const date = getJstDateString()
+  // ---- 3. トークンに紐づく日付（営業日ベース）を使用 ----
+  const date: string = tokenRow.date
 
   // ---- 4. 配信者のレベルを取得 ----
   const { data: streamerForLevel } = await supabase

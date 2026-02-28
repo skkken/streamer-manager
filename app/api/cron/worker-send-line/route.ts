@@ -104,10 +104,10 @@ export async function POST(req: NextRequest) {
       } else {
         // ハッシュからURLは生成できないので、生のトークンを再発行してDBを上書き
         const { generateToken, hashToken } = await import('@/lib/token')
-        const { getJstEndOfDay } = await import('@/lib/jst')
+        const { getTokenExpiry } = await import('@/lib/jst')
         const rawToken = generateToken()
         const newHash = hashToken(rawToken)
-        const expiresAt = getJstEndOfDay(today).toISOString()
+        const expiresAt = getTokenExpiry(today).toISOString()
 
         await supabase
           .from('checkin_tokens')

@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { createHmac } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
 import { generateToken, hashToken } from '@/lib/token'
-import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
+import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 
 /** LINE Reply API でメッセージを送信 */
 async function replyMessage(replyToken: string, text: string): Promise<void> {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         const keyword = messages.line_stream_end_keyword ?? '配信終了'
         if (text === keyword && replyToken) {
           const today = getJstDateString()
-          const expiresAt = getJstEndOfDay(today).toISOString()
+          const expiresAt = getTokenExpiry(today).toISOString()
           const rawToken = generateToken()
           const tokenHash = hashToken(rawToken)
 

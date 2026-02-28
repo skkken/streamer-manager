@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { hashToken } from '@/lib/token'
-import { getJstDateString } from '@/lib/jst'
+// getJstDateString は不要: トークンに紐づく date を使用する
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 
@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
   const fields: TemplateField[] = template.schema?.fields ?? []
   const aiResult = generateAiResult(fields, answers ?? {}, memo ?? '')
 
-  // ---- 4. self_checks upsert（2重送信防止） ----
-  const date = getJstDateString()
+  // ---- 4. self_checks upsert（トークンに紐づく営業日を使用） ----
+  const date: string = tokenRow.date
   const { data: check, error: checkError } = await supabase
     .from('self_checks')
     .upsert(

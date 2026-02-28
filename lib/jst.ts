@@ -33,3 +33,16 @@ export function getJstEndOfDay(dateStr?: string): Date {
   // 営業日 dateStr の終わり = 翌暦日 04:59:59 JST = dateStr当日 19:59:59 UTC
   return new Date(`${str}T19:59:59Z`)
 }
+
+/**
+ * チェックイントークンの有効期限 = 翌暦日 JST 12:00
+ * 営業日終了後も翌朝の入力を許容するため、営業日終了から7時間の猶予を設ける
+ */
+export function getTokenExpiry(dateStr?: string): Date {
+  const str = dateStr ?? getJstDateString()
+  // 翌暦日 12:00 JST = dateStr翌日 03:00 UTC
+  const base = new Date(`${str}T00:00:00Z`)
+  base.setUTCDate(base.getUTCDate() + 1)
+  base.setUTCHours(3, 0, 0, 0) // 翌日 03:00 UTC = 翌日 12:00 JST
+  return base
+}

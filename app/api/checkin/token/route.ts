@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
-import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
+import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 
 /**
  * POST /api/checkin/token
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const date = getJstDateString()
   const rawToken = generateToken()
   const token_hash = hashToken(rawToken)
-  const expires_at = getJstEndOfDay(date).toISOString()
+  const expires_at = getTokenExpiry(date).toISOString()
 
   // UNIQUE(streamer_id, date) なので既存行がある場合はスキップ
   const { data: existing } = await supabase
