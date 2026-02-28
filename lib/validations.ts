@@ -25,6 +25,7 @@ export const createStreamerSchema = z.object({
   tiktok_id: z.string().max(50).nullable().optional(),
   agency_name: z.string().max(100).nullable().optional(),
   manager_name: z.string().max(100).nullable().optional(),
+  line_channel_id: z.string().uuid().nullable().optional(),
   status: streamerStatusSchema.optional(),
   notify_enabled: z.boolean().optional(),
   notes: z.string().max(5000).nullable().optional(),
@@ -37,6 +38,7 @@ export const updateStreamerSchema = z.object({
   tiktok_id: z.string().max(50).nullable().optional(),
   agency_name: z.string().max(100).nullable().optional(),
   manager_name: z.string().max(100).nullable().optional(),
+  line_channel_id: z.string().uuid().nullable().optional(),
   notify_enabled: z.boolean().optional(),
   level_override: z.number().int().min(0).max(10).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
@@ -168,6 +170,7 @@ export const registerLineUserSchema = z.object({
   office_name: z.string().max(100).nullable().optional(),
   agency_name: z.string().max(100).nullable().optional(),
   manager_name: z.string().max(100).nullable().optional(),
+  line_channel_id: z.string().uuid().nullable().optional(),
 })
 
 // ============================================================

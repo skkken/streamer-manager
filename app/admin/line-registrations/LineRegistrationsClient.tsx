@@ -14,6 +14,7 @@ type Registration = {
   input_name: string | null
   tiktok_id: string | null
   office_name: string | null
+  line_channel_id: string | null
   created_at: string
 }
 
@@ -31,7 +32,7 @@ export default function LineRegistrationsClient({
 }) {
   const router = useRouter()
   const [openId, setOpenId] = useState<string | null>(null)
-  const [form, setForm] = useState({ display_name: '', tiktok_id: '', office_name: '' })
+  const [form, setForm] = useState({ display_name: '', tiktok_id: '', office_name: '', line_channel_id: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -44,6 +45,7 @@ export default function LineRegistrationsClient({
       display_name: reg.input_name ?? reg.line_display_name ?? '',
       tiktok_id: reg.tiktok_id ?? '',
       office_name: reg.office_name ?? '',
+      line_channel_id: reg.line_channel_id ?? '',
     })
     setError('')
   }
@@ -63,6 +65,7 @@ export default function LineRegistrationsClient({
           display_name: form.display_name,
           tiktok_id: form.tiktok_id || null,
           office_name: form.office_name || null,
+          line_channel_id: form.line_channel_id || null,
         }),
       })
       if (!res.ok) {

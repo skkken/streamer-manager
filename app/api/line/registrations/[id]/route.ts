@@ -20,7 +20,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const parsed = parseBody(registerLineUserSchema, await req.json())
   if (!parsed.success) return parsed.error
-  const { display_name, tiktok_id, office_name, agency_name, manager_name } = parsed.data
+  const { display_name, tiktok_id, office_name, agency_name, manager_name, line_channel_id } = parsed.data
 
   // 登録待ちレコード取得
   const { data: reg, error: regErr } = await supabase
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       tiktok_id: tiktok_id?.trim() || reg.tiktok_id || null,
       agency_name: office_name?.trim() || agency_name?.trim() || reg.office_name || null,
       manager_name: manager_name?.trim() || null,
+      line_channel_id: line_channel_id || reg.line_channel_id || null,
       status: 'active',
       notify_enabled: true,
     })
