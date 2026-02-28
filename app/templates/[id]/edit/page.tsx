@@ -49,7 +49,7 @@ export default function EditTemplatePage() {
           return
         }
         setName(data.name ?? '')
-        setForLevel(data.for_level ?? 0)
+        setForLevel(data.for_level ?? 1)
         const rawFields: { label?: string; required?: boolean }[] =
           data.schema?.fields ?? []
         setFields(

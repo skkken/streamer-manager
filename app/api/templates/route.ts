@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('self_check_templates')
-    .insert({ name, for_level: for_level ?? 0, schema })
+    .insert({ name, for_level: for_level ?? 1, schema })
     .select()
     .single()
 

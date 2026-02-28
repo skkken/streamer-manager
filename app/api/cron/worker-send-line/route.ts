@@ -70,8 +70,8 @@ export async function POST(req: NextRequest) {
       .eq('id', job.streamer_id)
       .single()
 
-    // レベル未設定の場合はスキップ
-    const effectiveLevel = streamer?.level_override ?? streamer?.level_current ?? null
+    // レベル未設定（0含む）の場合はスキップ
+    const effectiveLevel = streamer?.level_override ?? (streamer?.level_current || null)
 
     // 無効化またはレベル未設定の場合はスキップ
     if (

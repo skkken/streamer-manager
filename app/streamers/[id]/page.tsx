@@ -81,6 +81,12 @@ async function getData(id: string) {
     const earnings = earningsRes.data ?? []
     const totalDiamonds = earnings.reduce((sum, r) => sum + (r.diamonds ?? 0), 0)
 
+    // 日付 → earnings のマップ
+    const earningsByDate: Record<string, { diamonds: number; streaming_minutes: number }> = {}
+    for (const e of earnings) {
+      earningsByDate[e.date] = { diamonds: e.diamonds ?? 0, streaming_minutes: e.streaming_minutes ?? 0 }
+    }
+
     const templateFields: Record<string, TemplateField[]> = {}
     for (const t of templatesRes.data ?? []) {
       templateFields[t.id] = ((t.schema as TemplateSchema) ?? {}).fields ?? []
@@ -92,9 +98,10 @@ async function getData(id: string) {
       notes: notesRes.data ?? [],
       stats: computeStats(checksRes.data ?? [], totalDiamonds, earnings),
       templateFields,
+      earningsByDate,
     }
   } catch {
-    return { streamer: null, checks: [], notes: [], stats: null, templateFields: {} }
+    return { streamer: null, checks: [], notes: [], stats: null, templateFields: {}, earningsByDate: {} }
   }
 }
 
@@ -104,7 +111,7 @@ export default async function StreamerDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { streamer, checks, notes, stats, templateFields } = await getData(id)
+  const { streamer, checks, notes, stats, templateFields, earningsByDate } = await getData(id)
 
   if (!streamer) {
     notFound()
@@ -112,7 +119,7 @@ export default async function StreamerDetailPage({
 
   return (
     <AdminLayout title="配信者詳細">
-      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} />
+      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} earningsByDate={earningsByDate} />
     </AdminLayout>
   )
 }

@@ -84,12 +84,14 @@ export default function StreamerDetailClient({
   notes: initialNotes,
   stats,
   templateFields,
+  earningsByDate,
 }: {
   streamer: Streamer
   checks: SelfCheck[]
   notes: StaffNote[]
   stats: Stats | null
   templateFields: Record<string, TemplateField[]>
+  earningsByDate: Record<string, { diamonds: number; streaming_minutes: number }>
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<'checks' | 'notes'>('checks')
@@ -370,6 +372,8 @@ export default function StreamerDetailClient({
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="text-left px-4 py-3 text-gray-600">日付</th>
+                      <th className="text-left px-4 py-3 text-gray-600">配信時間</th>
+                      <th className="text-left px-4 py-3 text-gray-600">ダイヤ</th>
                       <th className="text-left px-4 py-3 text-gray-600">スコア</th>
                       <th className="text-left px-4 py-3 text-gray-600">判定</th>
                       <th className="text-left px-4 py-3 text-gray-600">ネガ</th>
@@ -380,6 +384,7 @@ export default function StreamerDetailClient({
                     {checks.map((c) => {
                       const isExpanded = expandedCheckId === c.id
                       const fields = templateFields[c.template_id] ?? []
+                      const earning = earningsByDate[c.date]
                       return (
                         <React.Fragment key={c.id}>
                           <tr
@@ -387,6 +392,12 @@ export default function StreamerDetailClient({
                             onClick={() => setExpandedCheckId(isExpanded ? null : c.id)}
                           >
                             <td className="px-4 py-3 text-gray-700">{c.date}</td>
+                            <td className="px-4 py-3 text-gray-700">
+                              {earning ? formatMinutes(earning.streaming_minutes) : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">
+                              {earning ? earning.diamonds.toLocaleString() : '—'}
+                            </td>
                             <td className="px-4 py-3 font-medium">
                               {c.overall_score ?? '—'}
                             </td>
@@ -416,7 +427,7 @@ export default function StreamerDetailClient({
                           </tr>
                           {isExpanded && (
                             <tr className="bg-indigo-50">
-                              <td colSpan={5} className="px-6 py-4">
+                              <td colSpan={7} className="px-6 py-4">
                                 <div className="space-y-3">
                                   {/* 回答一覧 */}
                                   <div className="grid grid-cols-2 gap-x-8 gap-y-0">

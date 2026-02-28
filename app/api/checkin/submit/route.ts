@@ -51,27 +51,17 @@ export async function POST(req: NextRequest) {
     .eq('id', tokenRow.streamer_id)
     .single()
 
-  const effectiveLevel = streamerForLevel?.level_override ?? streamerForLevel?.level_current ?? 0
+  const effectiveLevel = streamerForLevel?.level_override ?? (streamerForLevel?.level_current || null)
 
-  let template = null
-  const { data: levelTemplate } = await supabase
+  const { data: allTemplates } = await supabase
     .from('self_check_templates')
     .select('*')
     .eq('is_active', true)
-    .eq('for_level', effectiveLevel)
-    .single()
 
-  if (levelTemplate) {
-    template = levelTemplate
-  } else {
-    const { data: fallbackTemplate } = await supabase
-      .from('self_check_templates')
-      .select('*')
-      .eq('is_active', true)
-      .eq('for_level', 0)
-      .single()
-    template = fallbackTemplate
-  }
+  const template =
+    (allTemplates ?? []).find((t) => t.for_level === effectiveLevel) ??
+    (allTemplates ?? [])[0] ??
+    null
 
   if (!template) {
     return NextResponse.json(
