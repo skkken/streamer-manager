@@ -10,7 +10,7 @@ const PROTECTED_PAGE_PREFIXES = [
 ]
 
 /** レート制限から免除するAPIパス */
-const RATE_LIMIT_EXEMPT = ['/api/cron/', '/api/line/webhook']
+const RATE_LIMIT_EXEMPT = ['/api/cron/', '/api/line/webhook', '/api/health']
 
 /** 公開APIパス（厳しい制限を適用） */
 const PUBLIC_API_PATHS = ['/api/checkin/', '/api/self-check']
