@@ -77,28 +77,18 @@ export async function POST(req: NextRequest) {
     .eq('id', streamerId)
     .single()
 
-  const effectiveLevel = streamerForLevel?.level_override ?? streamerForLevel?.level_current ?? 0
+  // ---- 5. レベルに対応するアクティブテンプレ取得（0はレベル未設定扱い、fallback: 最初のテンプレ）----
+  const effectiveLevel = streamerForLevel?.level_override ?? (streamerForLevel?.level_current || null)
 
-  // ---- 5. レベルに対応するアクティブテンプレ取得（fallback: レベル0）----
-  let template = null
-  const { data: levelTemplate } = await supabase
+  const { data: allTemplates } = await supabase
     .from('self_check_templates')
     .select('*')
     .eq('is_active', true)
-    .eq('for_level', effectiveLevel)
-    .single()
 
-  if (levelTemplate) {
-    template = levelTemplate
-  } else {
-    const { data: fallbackTemplate } = await supabase
-      .from('self_check_templates')
-      .select('*')
-      .eq('is_active', true)
-      .eq('for_level', 0)
-      .single()
-    template = fallbackTemplate
-  }
+  const template =
+    (allTemplates ?? []).find((t) => t.for_level === effectiveLevel) ??
+    (allTemplates ?? [])[0] ??
+    null
 
   if (!template) {
     return NextResponse.json({ error: 'アクティブなテンプレートがありません' }, { status: 503 })

@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '配信者が見つかりません' }, { status: 404 })
   }
 
-  // 有効レベルを算出してテンプレ取得（レベル一致 → レベル0 フォールバック）
-  const effectiveLevel = streamer.level_override ?? streamer.level_current ?? 0
+  // 有効レベルを算出（0はレベル未設定扱い、fallback: 最初のテンプレ）
+  const effectiveLevel = streamer.level_override ?? (streamer.level_current || null)
   const { data: templates } = await supabase
     .from('self_check_templates')
     .select('*')
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
   const template =
     (templates ?? []).find((t) => t.for_level === effectiveLevel) ??
-    (templates ?? []).find((t) => t.for_level === 0) ??
+    (templates ?? [])[0] ??
     null
 
   if (!template) {
