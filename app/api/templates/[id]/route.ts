@@ -25,11 +25,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
   const { id } = await params
   const body = await req.json()
-  const { name, for_level, schema_json } = body
+  const { name, for_level, schema_json, is_active } = body
 
   const updates: Record<string, unknown> = {}
   if (name !== undefined) updates.name = name
   if (for_level !== undefined) updates.for_level = for_level
+  if (is_active !== undefined) updates.is_active = is_active
   if (schema_json !== undefined) {
     let schema: TemplateSchema
     try {

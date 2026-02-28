@@ -15,6 +15,7 @@ export default function TemplateActions({
 }) {
   const router = useRouter()
   const [activating, setActivating] = useState(false)
+  const [deactivating, setDeactivating] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,6 +29,30 @@ export default function TemplateActions({
       setError('有効化に失敗しました')
     } finally {
       setActivating(false)
+    }
+  }
+
+  const handleDeactivate = async () => {
+    setDeactivating(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/templates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: false }),
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        let message = '無効化に失敗しました'
+        try { message = JSON.parse(text).error ?? message } catch (_e) {}
+        setError(message)
+        return
+      }
+      router.refresh()
+    } catch (_e) {
+      setError('無効化に失敗しました')
+    } finally {
+      setDeactivating(false)
     }
   }
 
@@ -60,9 +85,13 @@ export default function TemplateActions({
         <span className="text-xs text-red-600 max-w-[200px] text-right">{error}</span>
       )}
       {isActive ? (
-        <span className="px-3 py-1.5 text-xs font-medium rounded bg-green-100 text-green-700 border border-green-200">
-          有効中
-        </span>
+        <button
+          onClick={handleDeactivate}
+          disabled={deactivating}
+          className="px-3 py-1.5 text-xs font-medium rounded border border-yellow-300 text-yellow-700 hover:bg-yellow-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {deactivating ? '処理中…' : '無効にする'}
+        </button>
       ) : (
         <button
           onClick={handleActivate}
