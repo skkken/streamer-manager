@@ -2,39 +2,46 @@
 
 import { useSearchParams } from 'next/navigation'
 import { AiType } from '@/lib/types'
-import { NEGATIVE_SUPPLEMENT } from '@/lib/ai'
 
 const headerColor: Record<AiType, string> = {
+  VERY_GOOD: 'bg-emerald-500',
   GOOD: 'bg-green-500',
   NORMAL: 'bg-indigo-600',
-  SUPPORT: 'bg-orange-500',
+  BAD: 'bg-amber-500',
+  VERY_BAD: 'bg-orange-500',
 }
 
 const feedbackBg: Record<AiType, string> = {
+  VERY_GOOD: 'bg-emerald-50 border-emerald-200',
   GOOD: 'bg-green-50 border-green-200',
   NORMAL: 'bg-indigo-50 border-indigo-200',
-  SUPPORT: 'bg-orange-50 border-orange-200',
-}
-
-const feedbackTitle: Record<AiType, string> = {
-  GOOD: '今日のフィードバック',
-  NORMAL: '今日のフィードバック',
-  SUPPORT: '今日のフィードバック',
+  BAD: 'bg-amber-50 border-amber-200',
+  VERY_BAD: 'bg-orange-50 border-orange-200',
 }
 
 const scoreLabel: Record<AiType, string> = {
+  VERY_GOOD: '絶好調',
   GOOD: '好調',
   NORMAL: '普通',
-  SUPPORT: '要サポート',
+  BAD: '要改善',
+  VERY_BAD: '要サポート',
 }
 
 const scoreBadge: Record<AiType, string> = {
+  VERY_GOOD: 'bg-emerald-100 text-emerald-700',
   GOOD: 'bg-green-100 text-green-700',
   NORMAL: 'bg-indigo-100 text-indigo-700',
-  SUPPORT: 'bg-orange-100 text-orange-700',
+  BAD: 'bg-amber-100 text-amber-700',
+  VERY_BAD: 'bg-orange-100 text-orange-700',
 }
 
-export default function CheckinDoneClient() {
+export default function CheckinDoneClient({
+  negativeSupplement,
+  footer,
+}: {
+  negativeSupplement: string
+  footer: string
+}) {
   const params = useSearchParams()
   const aiType = (params.get('type') ?? 'NORMAL') as AiType
   const comment = params.get('comment') ?? ''
@@ -87,17 +94,13 @@ export default function CheckinDoneClient() {
             </div>
 
             {/* ネガ補足 */}
-            {negDetected && aiType === 'SUPPORT' && (
+            {negDetected && (aiType === 'VERY_BAD' || aiType === 'BAD') && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
-                <p className="text-sm text-yellow-800 leading-relaxed">
-                  {NEGATIVE_SUPPLEMENT}
-                </p>
+                <p className="text-sm text-yellow-800 leading-relaxed">{negativeSupplement}</p>
               </div>
             )}
 
-            <p className="text-xs text-gray-400 text-center pt-1">
-              お疲れさまでした。このページは閉じて大丈夫です。
-            </p>
+            <p className="text-xs text-gray-400 text-center pt-1">{footer}</p>
           </div>
         </div>
       </div>

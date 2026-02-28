@@ -38,6 +38,7 @@ export default function CheckinClient() {
   const [loaded, setLoaded] = useState<LoadedData | null>(null)
   const [answers, setAnswers] = useState<Record<string, boolean | string>>({})
   const [memo, setMemo] = useState('')
+  const [diamonds, setDiamonds] = useState<number | ''>('')
   const [errorMsg, setErrorMsg] = useState('')
 
   // ----------------------------------------------------------------
@@ -139,17 +140,22 @@ export default function CheckinClient() {
       }
     }
 
+    if (diamonds === '' || Number(diamonds) < 0) {
+      setErrorMsg('当日のダイヤ数を0以上で入力してください')
+      return
+    }
+
     setStatus('submitting')
 
     try {
       let res: Response
 
       if (token) {
-        // 本番：トークンで送信
-        res = await fetch('/api/checkin/submit', {
+        // 本番：トークンで送信（diamonds + レベル更新を含む）
+        res = await fetch('/api/self-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, answers, memo }),
+          body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds) }),
         })
       } else {
         // テスト：直接送信
@@ -161,6 +167,7 @@ export default function CheckinClient() {
             date: loaded!.date,
             answers,
             memo,
+            diamonds: Number(diamonds),
           }),
         })
       }
@@ -239,7 +246,29 @@ export default function CheckinClient() {
 
           <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
 
-            {/* 質問フィールド */}
+            {/* 今回のダイヤ入力 */}
+            <div>
+              <p className="text-sm font-medium text-gray-800 mb-2">
+                今回のダイヤ数
+                <span className="ml-1 text-red-500">*</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={diamonds}
+                  onChange={(e) =>
+                    setDiamonds(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="例：3000"
+                />
+                <span className="text-sm text-gray-500 whitespace-nowrap">ダイヤ</span>
+              </div>
+            </div>
+
+            {/* 質問フィールド（YES/NO + テキスト） */}
             {fields.map((field) => (
               <div key={field.key}>
                 <p className="text-sm font-medium text-gray-800 mb-2">

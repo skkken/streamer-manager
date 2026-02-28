@@ -1,7 +1,12 @@
 import { Suspense } from 'react'
+import { getMessageSettings } from '@/lib/messages'
 import CheckinDoneClient from './CheckinDoneClient'
 
-export default function CheckinDonePage() {
+export default async function CheckinDonePage() {
+  const messages = await getMessageSettings()
+  const negativeSupplement = messages.done_negative_supplement
+  const footer = messages.done_footer
+
   return (
     <Suspense
       fallback={
@@ -10,7 +15,7 @@ export default function CheckinDonePage() {
         </div>
       }
     >
-      <CheckinDoneClient />
+      <CheckinDoneClient negativeSupplement={negativeSupplement} footer={footer} />
     </Suspense>
   )
 }

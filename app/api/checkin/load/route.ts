@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   // 配信者存在確認
   const { data: streamer, error: sErr } = await supabase
     .from('streamers')
-    .select('id, display_name')
+    .select('id, display_name, level_current, level_override')
     .eq('id', streamer_id)
     .single()
 
@@ -39,14 +39,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: '配信者が見つかりません' }, { status: 404 })
   }
 
-  // アクティブテンプレ取得
-  const { data: template, error: tErr } = await supabase
+  // 有効レベルを算出してテンプレ取得（レベル一致 → レベル0 フォールバック）
+  const effectiveLevel = streamer.level_override ?? streamer.level_current ?? 0
+  const { data: templates } = await supabase
     .from('self_check_templates')
     .select('*')
     .eq('is_active', true)
-    .single()
 
-  if (tErr || !template) {
+  const template =
+    (templates ?? []).find((t) => t.for_level === effectiveLevel) ??
+    (templates ?? []).find((t) => t.for_level === 0) ??
+    null
+
+  if (!template) {
     return NextResponse.json(
       { error: 'アクティブなテンプレートがありません。/templates で作成してください。' },
       { status: 503 }
