@@ -268,6 +268,18 @@ create trigger trg_message_settings_updated_at
   for each row execute function update_updated_at();
 
 -- ============================================================
+-- line_registrations
+-- ============================================================
+create table if not exists line_registrations (
+  id                uuid primary key default gen_random_uuid(),
+  line_user_id      text not null unique,
+  line_display_name text,
+  status            text not null default 'pending'
+                      check (status in ('pending', 'registered')),
+  created_at        timestamptz not null default now()
+);
+
+-- ============================================================
 -- streamers level カラム追加
 -- ============================================================
 alter table streamers
