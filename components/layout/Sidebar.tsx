@@ -4,18 +4,20 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
+const BADGE_HREF = '/admin/line-registrations'
+
 const navItems = [
   { label: '配信者一覧', href: '/streamers' },
   { label: 'テンプレ管理', href: '/templates' },
   { label: '運用ボード', href: '/board' },
-  { label: 'LINE登録待ち', href: '/admin/line-registrations' },
+  { label: 'LINE登録待ち', href: BADGE_HREF },
   { label: 'LINEチャネル', href: '/admin/line-channels' },
   { label: '通知ジョブ', href: '/admin/notifications' },
   { label: 'メッセージ設定', href: '/admin/messages' },
   { label: 'Cron設定', href: '/admin/cron' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ pendingCount = 0 }: { pendingCount?: number }) {
   const pathname = usePathname()
 
   return (
@@ -33,13 +35,18 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-3 py-2 rounded text-sm transition-colors ${
+              className={`flex items-center justify-between px-3 py-2 rounded text-sm transition-colors ${
                 active
                   ? 'bg-indigo-600 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
               {item.label}
+              {item.href === BADGE_HREF && pendingCount > 0 && (
+                <span className="ml-2 min-w-[1.25rem] px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full text-center">
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           )
         })}
