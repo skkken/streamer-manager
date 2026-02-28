@@ -18,7 +18,6 @@ function makeKey(index: number) {
 }
 
 const LEVEL_LABELS: Record<number, string> = {
-  0: '全員共通（デフォルト）',
   1: 'Lv1',
   2: 'Lv2',
   3: 'Lv3',
@@ -32,7 +31,7 @@ const LEVEL_LABELS: Record<number, string> = {
 export default function NewTemplatePage() {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [forLevel, setForLevel] = useState(0)
+  const [forLevel, setForLevel] = useState(1)
   const [fields, setFields] = useState<FieldRow[]>([{ label: '', required: true }])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -129,7 +128,6 @@ export default function NewTemplatePage() {
                       <option key={val} value={val}>{label}</option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-gray-400">レベル0は対応テンプレートがないレベルへのフォールバックになります</p>
                 </div>
               </div>
 

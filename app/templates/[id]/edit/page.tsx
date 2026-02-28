@@ -18,7 +18,6 @@ function makeKey(index: number) {
 }
 
 const LEVEL_LABELS: Record<number, string> = {
-  0: '全員共通（デフォルト）',
   1: 'Lv1',
   2: 'Lv2',
   3: 'Lv3',
@@ -164,7 +163,6 @@ export default function EditTemplatePage() {
                       <option key={val} value={val}>{label}</option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-gray-400">レベル0は対応テンプレートがないレベルへのフォールバックになります</p>
                 </div>
               </div>
 

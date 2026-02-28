@@ -51,7 +51,7 @@ export default async function TemplatesPage() {
                 <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-6 py-3 font-medium text-gray-900">{t.name}</td>
                   <td className="px-6 py-3 text-gray-500">
-                    {t.for_level === 0 ? '全員共通' : t.for_level === 8 ? 'G' : `Lv${t.for_level}`}
+                    {t.for_level === 8 ? 'G' : `Lv${t.for_level}`}
                   </td>
                   <td className="px-6 py-3 text-gray-500">
                     {(t.schema as { fields?: unknown[] })?.fields?.length ?? 0}
