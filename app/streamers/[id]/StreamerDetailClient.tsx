@@ -210,7 +210,8 @@ export default function StreamerDetailClient({
     }
   }
 
-  const effectiveLevel = streamer.level_override ?? streamer.level_current ?? 0
+  const effectiveLevel = streamer.level_override ?? streamer.level_current ?? null
+  const levelLabel = effectiveLevel === null ? '—' : effectiveLevel === 8 ? 'G' : `Lv${effectiveLevel}`
 
   return (
     <div className="grid grid-cols-3 gap-6">
@@ -227,12 +228,7 @@ export default function StreamerDetailClient({
                 </Badge>
               </InfoRow>
               <InfoRow label="現在のレベル">
-                <span className="font-medium">
-                  Lv{effectiveLevel}
-                  {streamer.level_override !== null && streamer.level_override !== undefined && (
-                    <span className="ml-1 text-xs text-indigo-500">（上書き）</span>
-                  )}
-                </span>
+                <span className="font-medium">{levelLabel}</span>
               </InfoRow>
               <InfoRow label="事務所名">
                 {streamer.agency_name ?? <span className="text-gray-400 text-xs">未設定</span>}

@@ -196,10 +196,7 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
                     <Badge variant={statusVariant[s.status]}>{statusLabel[s.status]}</Badge>
                   </td>
                   <td className="px-4 py-3 text-gray-700">
-                    Lv{s.level_override ?? s.level_current ?? 0}
-                    {s.level_override !== null && s.level_override !== undefined && (
-                      <span className="ml-1 text-xs text-indigo-400">※</span>
-                    )}
+                    {(() => { const lv = s.level_override ?? s.level_current ?? null; return lv === null ? '—' : lv === 8 ? 'G' : `Lv${lv}` })()}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
                     {s.agency_name ?? <span className="text-gray-300">—</span>}
