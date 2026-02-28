@@ -347,7 +347,7 @@ export default function StreamerDetailClient({
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Self Checks ({checks.length})
+            自己評価 ({checks.length})
           </button>
           <button
             onClick={() => setTab('notes')}
@@ -357,7 +357,7 @@ export default function StreamerDetailClient({
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Staff Notes ({notesList.length})
+            担当ノート ({notesList.length})
           </button>
         </div>
 
