@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { createHmac } from 'crypto'
 
+/** LINE Reply API でメッセージを送信 */
+async function replyMessage(replyToken: string, text: string): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  if (!token) return
+  await fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      replyToken,
+      messages: [{ type: 'text', text }],
+    }),
+  })
+}
+
 /** LINE Profile API でdisplay nameを取得 */
 async function getLineDisplayName(lineUserId: string): Promise<string | null> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
@@ -44,13 +61,14 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient()
 
   for (const event of payload.events) {
-    // follow または message イベントのみ処理
     if (event.type !== 'follow' && event.type !== 'message') continue
     const source = event.source as Record<string, string> | undefined
     if (source?.type !== 'user') continue
 
     const lineUserId = source.userId
     if (!lineUserId) continue
+
+    const replyToken = event.replyToken as string | undefined
 
     // 既に配信者として登録済みならスキップ
     const { data: existingStreamer } = await supabase
@@ -60,25 +78,70 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     if (existingStreamer) continue
 
-    // 既に登録待ちならスキップ
-    const { data: existingReg } = await supabase
-      .from('line_registrations')
-      .select('id')
-      .eq('line_user_id', lineUserId)
-      .maybeSingle()
-    if (existingReg) continue
+    // --- follow イベント: 新規登録フロー開始 ---
+    if (event.type === 'follow') {
+      const { data: existingReg } = await supabase
+        .from('line_registrations')
+        .select('id')
+        .eq('line_user_id', lineUserId)
+        .maybeSingle()
+      if (existingReg) continue
 
-    // LINE display name 取得
-    const lineDisplayName = await getLineDisplayName(lineUserId)
+      const lineDisplayName = await getLineDisplayName(lineUserId)
+      await supabase.from('line_registrations').insert({
+        line_user_id: lineUserId,
+        line_display_name: lineDisplayName,
+        status: 'pending',
+        step: 'ask_name',
+      })
 
-    // 登録待ちに追加
-    await supabase.from('line_registrations').insert({
-      line_user_id: lineUserId,
-      line_display_name: lineDisplayName,
-      status: 'pending',
-    })
+      if (replyToken) {
+        await replyMessage(replyToken, '登録を開始します。\nあなたの名前（本名またはニックネーム）を入力してください。')
+      }
+      continue
+    }
+
+    // --- message イベント: 会話フロー処理 ---
+    if (event.type === 'message') {
+      const msg = event.message as Record<string, unknown> | undefined
+      if (msg?.type !== 'text') continue
+      const text = (msg.text as string).trim()
+
+      const { data: reg } = await supabase
+        .from('line_registrations')
+        .select('id, step')
+        .eq('line_user_id', lineUserId)
+        .maybeSingle()
+
+      if (!reg) continue
+
+      if (reg.step === 'ask_name') {
+        await supabase
+          .from('line_registrations')
+          .update({ input_name: text, step: 'ask_tiktok' })
+          .eq('id', reg.id)
+        if (replyToken) {
+          await replyMessage(replyToken, `ありがとうございます！\n次に、TikTok IDを入力してください。\n（例: @your_tiktok_id）`)
+        }
+      } else if (reg.step === 'ask_tiktok') {
+        await supabase
+          .from('line_registrations')
+          .update({ tiktok_id: text, step: 'ask_office' })
+          .eq('id', reg.id)
+        if (replyToken) {
+          await replyMessage(replyToken, `ありがとうございます！\n最後に、所属事務所名を入力してください。\n（事務所に所属していない場合は「なし」と入力してください）`)
+        }
+      } else if (reg.step === 'ask_office') {
+        await supabase
+          .from('line_registrations')
+          .update({ office_name: text, step: 'done' })
+          .eq('id', reg.id)
+        if (replyToken) {
+          await replyMessage(replyToken, '登録情報を受け付けました！\nスタッフが確認後、ご連絡いたします。しばらくお待ちください。')
+        }
+      }
+    }
   }
 
-  // LINE はレスポンスが遅いと再送するため 200 を返す
   return NextResponse.json({ ok: true })
 }
