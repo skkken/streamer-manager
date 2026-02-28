@@ -32,7 +32,7 @@ export default function LineRegistrationsClient({
 }) {
   const router = useRouter()
   const [openId, setOpenId] = useState<string | null>(null)
-  const [form, setForm] = useState({ display_name: '', tiktok_id: '', office_name: '', line_channel_id: '' })
+  const [form, setForm] = useState({ display_name: '', tiktok_id: '', line_channel_id: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -44,7 +44,6 @@ export default function LineRegistrationsClient({
     setForm({
       display_name: reg.input_name ?? reg.line_display_name ?? '',
       tiktok_id: reg.tiktok_id ?? '',
-      office_name: reg.office_name ?? '',
       line_channel_id: reg.line_channel_id ?? '',
     })
     setError('')
@@ -64,7 +63,6 @@ export default function LineRegistrationsClient({
         body: JSON.stringify({
           display_name: form.display_name,
           tiktok_id: form.tiktok_id || null,
-          office_name: form.office_name || null,
           line_channel_id: form.line_channel_id || null,
         }),
       })
@@ -130,9 +128,6 @@ export default function LineRegistrationsClient({
                   {reg.tiktok_id && (
                     <p className="text-xs text-gray-500">TikTok: {reg.tiktok_id}</p>
                   )}
-                  {reg.office_name && (
-                    <p className="text-xs text-gray-500">事務所: {reg.office_name}</p>
-                  )}
                   <p className="text-xs text-gray-400">LINE ID: {reg.line_user_id}</p>
                   <p className="text-xs text-gray-400">
                     登録日時: {new Date(reg.created_at).toLocaleString('ja-JP')}
@@ -183,18 +178,6 @@ export default function LineRegistrationsClient({
                       onChange={(e) => setForm({ ...form, tiktok_id: e.target.value })}
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       placeholder="@username"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      事務所名
-                    </label>
-                    <input
-                      type="text"
-                      value={form.office_name}
-                      onChange={(e) => setForm({ ...form, office_name: e.target.value })}
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="事務所名（任意）"
                     />
                   </div>
                   {error && <p className="text-xs text-red-600">{error}</p>}

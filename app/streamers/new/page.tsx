@@ -4,16 +4,12 @@ import AdminLayout from '@/components/layout/AdminLayout'
 import Button from '@/components/ui/Button'
 import Card, { CardBody } from '@/components/ui/Card'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-
-type ChannelOption = { id: string; name: string }
+import { useState } from 'react'
 
 export default function NewStreamerPage() {
   const router = useRouter()
-  const [channels, setChannels] = useState<ChannelOption[]>([])
   const [form, setForm] = useState({
     display_name: '',
-    line_channel_id: '',
     manager_name: '',
     tiktok_id: '',
     line_user_id: '',
@@ -23,13 +19,6 @@ export default function NewStreamerPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    fetch('/api/line-channels')
-      .then((r) => r.json())
-      .then((data) => setChannels(data ?? []))
-      .catch(() => {})
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,7 +30,6 @@ export default function NewStreamerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          line_channel_id: form.line_channel_id || null,
           manager_name: form.manager_name.trim() || null,
           tiktok_id: form.tiktok_id.trim() || null,
         }),
@@ -109,22 +97,6 @@ export default function NewStreamerPage() {
                     LINE通知を有効にする
                   </label>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  事務所（LINEチャネル）
-                </label>
-                <select
-                  value={form.line_channel_id}
-                  onChange={(e) => setForm({ ...form, line_channel_id: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">未設定</option>
-                  {channels.map((ch) => (
-                    <option key={ch.id} value={ch.id}>{ch.name}</option>
-                  ))}
-                </select>
               </div>
 
               <div>

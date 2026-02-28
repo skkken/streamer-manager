@@ -29,10 +29,8 @@ export default function StreamerEditPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
 
-  const [channels, setChannels] = useState<{ id: string; name: string }[]>([])
   const [displayName, setDisplayName] = useState('')
   const [status, setStatus] = useState<StreamerStatus>('active')
-  const [lineChannelId, setLineChannelId] = useState('')
   const [managerName, setManagerName] = useState('')
   const [tiktokId, setTiktokId] = useState('')
   const [lineUserId, setLineUserId] = useState('')
@@ -43,11 +41,6 @@ export default function StreamerEditPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    fetch('/api/line-channels')
-      .then((r) => r.json())
-      .then((data) => setChannels(data ?? []))
-      .catch(() => {})
-
     fetch(`/api/streamers/${id}`)
       .then((r) => r.json())
       .then((data) => {
@@ -58,7 +51,6 @@ export default function StreamerEditPage() {
         }
         setDisplayName(data.display_name ?? '')
         setStatus(data.status ?? 'active')
-        setLineChannelId(data.line_channel_id ?? '')
         setManagerName(data.manager_name ?? '')
         setTiktokId(data.tiktok_id ?? '')
         setLineUserId(data.line_user_id ?? '')
@@ -84,7 +76,6 @@ export default function StreamerEditPage() {
     const body: Record<string, unknown> = {
       display_name: displayName.trim(),
       status,
-      line_channel_id: lineChannelId || null,
       manager_name: managerName.trim() || null,
       tiktok_id: tiktokId.trim() || null,
       line_user_id: lineUserId.trim(),
@@ -168,22 +159,6 @@ export default function StreamerEditPage() {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  事務所（LINEチャネル）
-                </label>
-                <select
-                  value={lineChannelId}
-                  onChange={(e) => setLineChannelId(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">未設定</option>
-                  {channels.map((ch) => (
-                    <option key={ch.id} value={ch.id}>{ch.name}</option>
-                  ))}
-                </select>
               </div>
 
               <div>
