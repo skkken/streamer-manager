@@ -265,7 +265,7 @@ export default function CheckinClient() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">選択してください</option>
-                {Array.from({ length: 49 }, (_, i) => i * 15).map((m) => {
+                {Array.from({ length: 97 }, (_, i) => i * 15).map((m) => {
                   const h = Math.floor(m / 60)
                   const min = m % 60
                   const label = h === 0 ? `${min}分` : min === 0 ? `${h}時間` : `${h}時間${min}分`
