@@ -36,6 +36,7 @@ export default function CheckinClient() {
 
   const [status, setStatus] = useState<PageStatus>('loading')
   const [loaded, setLoaded] = useState<LoadedData | null>(null)
+  const [streamingMinutes, setStreamingMinutes] = useState<number | ''>('')
   const [answers, setAnswers] = useState<Record<string, boolean | string>>({})
   const [memo, setMemo] = useState('')
   const [diamonds, setDiamonds] = useState<number | ''>('')
@@ -140,6 +141,11 @@ export default function CheckinClient() {
       }
     }
 
+    if (streamingMinutes === '') {
+      setErrorMsg('配信時間を選択してください')
+      return
+    }
+
     if (diamonds === '' || Number(diamonds) < 0) {
       setErrorMsg('当日のダイヤ数を0以上で入力してください')
       return
@@ -155,7 +161,7 @@ export default function CheckinClient() {
         res = await fetch('/api/self-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds) }),
+          body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds), streaming_minutes: Number(streamingMinutes) }),
         })
       } else {
         // テスト：直接送信
@@ -168,6 +174,7 @@ export default function CheckinClient() {
             answers,
             memo,
             diamonds: Number(diamonds),
+            streaming_minutes: Number(streamingMinutes),
           }),
         })
       }
@@ -245,6 +252,31 @@ export default function CheckinClient() {
           </div>
 
           <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+
+            {/* 配信時間 */}
+            <div>
+              <p className="text-sm font-medium text-gray-800 mb-2">
+                配信時間
+                <span className="ml-1 text-red-500">*</span>
+              </p>
+              <select
+                value={streamingMinutes}
+                onChange={(e) => setStreamingMinutes(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">選択してください</option>
+                {Array.from({ length: 49 }, (_, i) => i * 15).map((m) => {
+                  const h = Math.floor(m / 60)
+                  const min = m % 60
+                  const label = h === 0 ? `${min}分` : min === 0 ? `${h}時間` : `${h}時間${min}分`
+                  return (
+                    <option key={m} value={m}>
+                      {label}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
 
             {/* 今回のダイヤ入力 */}
             <div>

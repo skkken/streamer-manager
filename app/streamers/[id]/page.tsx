@@ -13,7 +13,7 @@ function yesRatio(answers: Record<string, boolean | string>): number {
 function computeStats(
   checks: SelfCheck[],
   totalDiamonds: number,
-  earnings: { date: string; diamonds: number }[]
+  earnings: { date: string; diamonds: number; streaming_minutes: number }[]
 ) {
   const today = new Date()
   const monthKey = today.toISOString().slice(0, 7)
@@ -44,7 +44,16 @@ function computeStats(
       ? weekChecks.reduce((sum, c) => sum + yesRatio(c.answers), 0) / weekChecks.length
       : null
 
-  return { totalDiamonds, monthDiamonds, checkinRate, latestYes, weekYes }
+  // 配信時間集計
+  const weekStreamingMinutes = earnings
+    .filter((r) => r.date >= mondayStr && r.date <= todayStr)
+    .reduce((sum, r) => sum + (r.streaming_minutes ?? 0), 0)
+  const monthStreamingMinutes = earnings
+    .filter((r) => r.date.startsWith(monthKey))
+    .reduce((sum, r) => sum + (r.streaming_minutes ?? 0), 0)
+  const totalStreamingMinutes = earnings.reduce((sum, r) => sum + (r.streaming_minutes ?? 0), 0)
+
+  return { totalDiamonds, monthDiamonds, checkinRate, latestYes, weekYes, weekStreamingMinutes, monthStreamingMinutes, totalStreamingMinutes }
 }
 
 async function getData(id: string) {
@@ -65,7 +74,7 @@ async function getData(id: string) {
         .order('created_at', { ascending: false }),
       supabase
         .from('daily_earnings')
-        .select('date, diamonds')
+        .select('date, diamonds, streaming_minutes')
         .eq('streamer_id', id),
       supabase.from('self_check_templates').select('id, schema'),
     ])

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 })
   }
 
-  const { token, answers, memo, diamonds } = body
+  const { token, answers, memo, diamonds, streaming_minutes } = body
 
   if (!token) {
     return NextResponse.json({ error: 'token は必須' }, { status: 400 })
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
   if (typeof diamonds !== 'number' || !Number.isFinite(diamonds) || diamonds < 0) {
     return NextResponse.json({ error: 'diamonds は 0 以上の数値が必須です' }, { status: 400 })
   }
+  const streamingMinutesNum = typeof streaming_minutes === 'number' && streaming_minutes >= 0 ? streaming_minutes : 0
 
   const tokenHash = hashToken(token as string)
   const now = new Date().toISOString()
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
   await supabase
     .from('daily_earnings')
     .upsert(
-      { streamer_id: streamerId, date, diamonds },
+      { streamer_id: streamerId, date, diamonds, streaming_minutes: streamingMinutesNum },
       { onConflict: 'streamer_id,date', ignoreDuplicates: false }
     )
 

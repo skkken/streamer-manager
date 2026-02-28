@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     )
   }
   const body = await req.json()
-  const { streamer_id, date: bodyDate, answers, memo, diamonds } = body
+  const { streamer_id, date: bodyDate, answers, memo, diamonds, streaming_minutes } = body
 
   if (!streamer_id) {
     return NextResponse.json({ error: 'streamer_id は必須' }, { status: 400 })
@@ -111,10 +111,11 @@ export async function POST(req: NextRequest) {
 
   // daily_earnings upsert
   const diamondsNum = typeof diamonds === 'number' && diamonds >= 0 ? diamonds : 0
+  const streamingMinutesNum = typeof streaming_minutes === 'number' && streaming_minutes >= 0 ? streaming_minutes : 0
   await supabase
     .from('daily_earnings')
     .upsert(
-      { streamer_id, date, diamonds: diamondsNum },
+      { streamer_id, date, diamonds: diamondsNum, streaming_minutes: streamingMinutesNum },
       { onConflict: 'streamer_id,date', ignoreDuplicates: false }
     )
 

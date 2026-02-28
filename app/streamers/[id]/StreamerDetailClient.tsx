@@ -45,6 +45,17 @@ type Stats = {
   checkinRate: number
   latestYes: number | null
   weekYes: number | null
+  weekStreamingMinutes: number
+  monthStreamingMinutes: number
+  totalStreamingMinutes: number
+}
+
+function formatMinutes(m: number): string {
+  const h = Math.floor(m / 60)
+  const min = m % 60
+  if (h === 0) return `${min}分`
+  if (min === 0) return `${h}時間`
+  return `${h}時間${min}分`
 }
 
 function pct(v: number | null): string {
@@ -292,6 +303,15 @@ export default function StreamerDetailClient({
             <CardBody>
               <h3 className="text-sm font-semibold text-gray-700 mb-3">統計</h3>
               <div className="space-y-0">
+                <InfoRow label="配信時間（今週）">
+                  <span className="font-medium">{formatMinutes(stats.weekStreamingMinutes)}</span>
+                </InfoRow>
+                <InfoRow label="配信時間（今月）">
+                  <span className="font-medium">{formatMinutes(stats.monthStreamingMinutes)}</span>
+                </InfoRow>
+                <InfoRow label="配信時間（累計）">
+                  <span className="font-medium">{formatMinutes(stats.totalStreamingMinutes)}</span>
+                </InfoRow>
                 <InfoRow label="今月獲得ダイヤ">
                   <span className="font-medium">{stats.monthDiamonds.toLocaleString()}</span>
                 </InfoRow>
