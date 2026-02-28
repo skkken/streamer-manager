@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { requireAuth } from '@/lib/auth-guard'
+import { captureApiError } from '@/lib/sentry'
 
 /**
  * GET /api/line-jobs?date=YYYY-MM-DD&status=queued
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
   if (error) {
-    console.error('GET /api/line-jobs:', error)
+    captureApiError(error, '/api/line-jobs', 'GET')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)

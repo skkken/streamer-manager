@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { createStaffNoteSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 // GET /api/staff-notes?streamer_id=xxx
 export async function GET(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
   if (error) {
-    console.error('GET /api/staff-notes:', error)
+    captureApiError(error, '/api/staff-notes', 'GET')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error('POST /api/staff-notes:', error)
+    captureApiError(error, '/api/staff-notes', 'POST')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data, { status: 201 })

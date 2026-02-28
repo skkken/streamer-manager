@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { notifyToggleSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -29,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('PATCH /api/streamers/[id]/notify:', error)
+    captureApiError(error, '/api/streamers/[id]/notify', 'PATCH')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)

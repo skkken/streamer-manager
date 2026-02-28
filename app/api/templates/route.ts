@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { createTemplateSchema, templateSchemaSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 export async function GET() {
   const { errorResponse } = await requireAuth()
@@ -14,7 +15,7 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('GET /api/templates:', error)
+    captureApiError(error, '/api/templates', 'GET')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error('POST /api/templates:', error)
+    captureApiError(error, '/api/templates', 'POST')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data, { status: 201 })

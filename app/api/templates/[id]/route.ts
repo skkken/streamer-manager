@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { updateTemplateSchema, templateSchemaSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('GET /api/templates/[id]:', error)
+    captureApiError(error, '/api/templates/[id]', 'GET')
     return NextResponse.json({ error: 'テンプレートが見つかりません' }, { status: 404 })
   }
   return NextResponse.json(data)
@@ -62,7 +63,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('PATCH /api/templates/[id]:', error)
+    captureApiError(error, '/api/templates/[id]', 'PATCH')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
@@ -96,7 +97,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .eq('id', id)
 
   if (error) {
-    console.error('DELETE /api/templates/[id]:', error)
+    captureApiError(error, '/api/templates/[id]', 'DELETE')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return new NextResponse(null, { status: 204 })

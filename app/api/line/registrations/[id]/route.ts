@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { registerLineUserSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (streamerErr) {
-    console.error('POST /api/line/registrations/[id]:', streamerErr)
+    captureApiError(streamerErr, '/api/line/registrations/[id]', 'POST')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 
@@ -81,7 +82,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .eq('id', id)
 
   if (error) {
-    console.error('DELETE /api/line/registrations/[id]:', error)
+    captureApiError(error, '/api/line/registrations/[id]', 'DELETE')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return new NextResponse(null, { status: 204 })

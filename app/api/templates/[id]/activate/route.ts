@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
+import { captureApiError } from '@/lib/sentry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -21,7 +22,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('POST /api/templates/[id]/activate:', error)
+    captureApiError(error, '/api/templates/[id]/activate', 'POST')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)

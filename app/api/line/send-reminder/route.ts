@@ -6,6 +6,7 @@ import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
 import { requireAuth } from '@/lib/auth-guard'
 import { sendReminderSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 /**
  * POST /api/line/send-reminder
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ sent, failed, errors })
   } catch (err) {
-    console.error('send-reminder error:', err)
+    captureApiError(err, '/api/line/send-reminder', 'POST')
     return NextResponse.json(
       { error: err instanceof Error ? err.message : '送信処理中にエラーが発生しました' },
       { status: 500 }

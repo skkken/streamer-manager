@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { updateStaffNoteSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 // PATCH /api/staff-notes/[id]
 export async function PATCH(
@@ -25,7 +26,7 @@ export async function PATCH(
     .single()
 
   if (error) {
-    console.error('PATCH /api/staff-notes/[id]:', error)
+    captureApiError(error, '/api/staff-notes/[id]', 'PATCH')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)

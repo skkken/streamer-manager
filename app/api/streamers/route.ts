@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { createStreamerSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 // GET /api/streamers  — 一覧取得
 export async function GET(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
 
   if (error) {
-    console.error('GET /api/streamers:', error)
+    captureApiError(error, '/api/streamers', 'GET')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
   try {
     supabase = createServerClient()
   } catch (e) {
-    console.error('POST /api/streamers (init):', e)
+    captureApiError(e, '/api/streamers', 'POST')
     return NextResponse.json(
       { error: 'サービスが一時的に利用できません' },
       { status: 503 }
@@ -72,12 +73,12 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         )
       }
-      console.error('POST /api/streamers:', error)
+      captureApiError(error, '/api/streamers', 'POST')
       return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
     return NextResponse.json({ success: true, id: data?.[0]?.id }, { status: 201 })
   } catch (e) {
-    console.error('POST /api/streamers:', e)
+    captureApiError(e, '/api/streamers', 'POST')
     return NextResponse.json(
       { error: 'サーバーエラーが発生しました' },
       { status: 500 }

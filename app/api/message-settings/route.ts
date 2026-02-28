@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { messageSettingsSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 // GET /api/message-settings
 export async function GET() {
@@ -15,14 +16,14 @@ export async function GET() {
       .select('key, value')
       .order('key')
     if (error) {
-      console.error('GET /api/message-settings:', error)
+      captureApiError(error, '/api/message-settings', 'GET')
       return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
     const settings: Record<string, string> = {}
     for (const row of data ?? []) settings[row.key] = row.value
     return NextResponse.json(settings)
   } catch (e) {
-    console.error('GET /api/message-settings:', e)
+    captureApiError(e, '/api/message-settings', 'GET')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 }
@@ -44,12 +45,12 @@ export async function PATCH(req: NextRequest) {
       .from('message_settings')
       .upsert(rows, { onConflict: 'key' })
     if (error) {
-      console.error('PATCH /api/message-settings:', error)
+      captureApiError(error, '/api/message-settings', 'PATCH')
       return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
     return NextResponse.json({ success: true })
   } catch (e) {
-    console.error('PATCH /api/message-settings:', e)
+    captureApiError(e, '/api/message-settings', 'PATCH')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 }

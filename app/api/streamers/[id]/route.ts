@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { updateStreamerSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('GET /api/streamers/[id]:', error)
+    captureApiError(error, '/api/streamers/[id]', 'GET')
     return NextResponse.json({ error: '配信者が見つかりません' }, { status: 404 })
   }
   return NextResponse.json(data)
@@ -44,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    console.error('PATCH /api/streamers/[id]:', error)
+    captureApiError(error, '/api/streamers/[id]', 'PATCH')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
@@ -63,7 +64,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .eq('id', id)
 
   if (error) {
-    console.error('DELETE /api/streamers/[id]:', error)
+    captureApiError(error, '/api/streamers/[id]', 'DELETE')
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return new NextResponse(null, { status: 204 })

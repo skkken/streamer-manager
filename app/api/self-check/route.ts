@@ -6,6 +6,7 @@ import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
 import { selfCheckSubmitSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 /**
  * POST /api/self-check
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (checkError) {
-    console.error('self_checks upsert error:', checkError)
+    captureApiError(checkError, '/api/self-check', 'POST', { streamerId })
   }
 
   // ---- 6. token を使用済みにする ----

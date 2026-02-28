@@ -5,6 +5,7 @@ import { hashToken } from '@/lib/token'
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 import { checkinSubmitSchema, parseBody } from '@/lib/validations'
+import { captureApiError } from '@/lib/sentry'
 
 /**
  * POST /api/checkin/submit
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
 
   if (checkError) {
     // LINEの失敗でも入力は成功させるため、ここで return はしない
-    console.error('self_checks upsert error:', checkError)
+    captureApiError(checkError, '/api/checkin/submit', 'POST')
   }
 
   // ---- 5. token を使用済みにする ----
