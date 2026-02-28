@@ -1,42 +1,98 @@
 import AdminLayout from '@/components/layout/AdminLayout'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
 import Card from '@/components/ui/Card'
-import NotifyToggle from '@/components/ui/NotifyToggle'
 import { createServerClient } from '@/lib/supabase/server'
-import { Streamer, StreamerStatus } from '@/lib/types'
+import { Streamer, StaffNoteStatus } from '@/lib/types'
+import StreamersTable, { StreamerRow } from './StreamersTable'
 
-const statusLabel: Record<StreamerStatus, string> = {
-  active: 'アクティブ',
-  paused: '一時停止',
-  graduated: '卒業',
-  dropped: '離脱',
+
+
+function yesRatio(answers: Record<string, boolean | string>): number {
+  const vals = Object.values(answers).filter((v) => typeof v === 'boolean')
+  if (!vals.length) return 0
+  return vals.filter((v) => v === true).length / vals.length
 }
 
-const statusVariant: Record<StreamerStatus, 'green' | 'yellow' | 'gray' | 'red'> = {
-  active: 'green',
-  paused: 'yellow',
-  graduated: 'gray',
-  dropped: 'red',
-}
-
-async function getStreamers(): Promise<Streamer[]> {
+async function getData(): Promise<StreamerRow[]> {
   try {
     const supabase = createServerClient()
-    const { data, error } = await supabase
-      .from('streamers')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return data ?? []
+
+    const today = new Date()
+    const todayStr = today.toISOString().slice(0, 10)
+    const monthKey = today.toISOString().slice(0, 7)
+
+    // 今週の月曜日を計算（月=1, 日=7）
+    const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay()
+    const weekDenominator = dayOfWeek
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - (dayOfWeek - 1))
+    const mondayStr = monday.toISOString().slice(0, 10)
+
+    const [streamersRes, earningsRes, checksRes, notesRes] = await Promise.all([
+      supabase.from('streamers').select('*').order('created_at', { ascending: false }),
+      supabase.from('daily_earnings').select('streamer_id, date, diamonds'),
+      supabase
+        .from('self_checks')
+        .select('streamer_id, date, answers')
+        .gte('date', mondayStr)
+        .lte('date', todayStr),
+      supabase
+        .from('staff_notes')
+        .select('streamer_id, status, date')
+        .order('date', { ascending: false }),
+    ])
+
+    const streamers: Streamer[] = streamersRes.data ?? []
+
+    // ダイヤ集計（累計 & 今月）
+    const totalDiamondMap = new Map<string, number>()
+    const monthDiamondMap = new Map<string, number>()
+    for (const r of earningsRes.data ?? []) {
+      totalDiamondMap.set(r.streamer_id, (totalDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
+      if (r.date.startsWith(monthKey)) {
+        monthDiamondMap.set(r.streamer_id, (monthDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
+      }
+    }
+
+    // 最新スタッフノートステータス（streamer_idごとに最初の1件 = 最新）
+    const latestNoteStatusMap = new Map<string, StaffNoteStatus>()
+    for (const n of notesRes.data ?? []) {
+      if (!latestNoteStatusMap.has(n.streamer_id)) {
+        latestNoteStatusMap.set(n.streamer_id, n.status as StaffNoteStatus)
+      }
+    }
+
+    // チェックイン回答率・今週YES割合集計
+    const weekCheckinCountMap = new Map<string, number>()
+    const weekYesSumMap = new Map<string, number>()
+    const weekYesCountMap = new Map<string, number>()
+    for (const c of checksRes.data ?? []) {
+      weekCheckinCountMap.set(c.streamer_id, (weekCheckinCountMap.get(c.streamer_id) ?? 0) + 1)
+      const ratio = yesRatio(c.answers as Record<string, boolean | string>)
+      weekYesSumMap.set(c.streamer_id, (weekYesSumMap.get(c.streamer_id) ?? 0) + ratio)
+      weekYesCountMap.set(c.streamer_id, (weekYesCountMap.get(c.streamer_id) ?? 0) + 1)
+    }
+
+    return streamers.map((s) => {
+      const cnt = weekCheckinCountMap.get(s.id) ?? 0
+      const weekCnt = weekYesCountMap.get(s.id) ?? 0
+      return {
+        ...s,
+        totalDiamonds: totalDiamondMap.get(s.id) ?? 0,
+        monthDiamonds: monthDiamondMap.get(s.id) ?? 0,
+        checkinRate: cnt / weekDenominator,
+        weekYes: weekCnt > 0 ? (weekYesSumMap.get(s.id) ?? 0) / weekCnt : null,
+        latestNoteStatus: latestNoteStatusMap.get(s.id) ?? null,
+      }
+    })
   } catch {
     return []
   }
 }
 
 export default async function StreamersPage() {
-  const streamers = await getStreamers()
+  const streamers = await getData()
 
   return (
     <AdminLayout title="配信者一覧">
@@ -57,50 +113,7 @@ export default async function StreamersPage() {
           </div>
         </Card>
       ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left px-6 py-3 text-gray-600 font-medium">名前</th>
-                  <th className="text-left px-6 py-3 text-gray-600 font-medium">ステータス</th>
-                  <th className="text-left px-6 py-3 text-gray-600 font-medium">通知</th>
-                  <th className="text-left px-6 py-3 text-gray-600 font-medium">登録日</th>
-                  <th className="px-6 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {streamers.map((s) => (
-                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-6 py-3 font-medium text-gray-900">{s.display_name}</td>
-                    <td className="px-6 py-3">
-                      <Badge variant={statusVariant[s.status]}>{statusLabel[s.status]}</Badge>
-                    </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-2">
-                        <NotifyToggle streamerId={s.id} enabled={s.notify_enabled} />
-                        <span className="text-xs text-gray-500">
-                          {s.notify_enabled ? 'ON' : 'OFF'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-gray-500">
-                      {new Date(s.created_at).toLocaleDateString('ja-JP')}
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      <Link
-                        href={`/streamers/${s.id}`}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm"
-                      >
-                        詳細
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <StreamersTable streamers={streamers} />
       )}
     </AdminLayout>
   )
