@@ -5,12 +5,6 @@ import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import { TemplateField, SelfCheckTemplate } from '@/lib/types'
 
-// ----------------------------------------------------------------
-// モード判定
-//   テストモード : ?streamerId=xxx&date=YYYY-MM-DD
-//   本番モード   : ?t=TOKEN
-// ----------------------------------------------------------------
-
 type LoadedData = {
   streamer_id: string
   streamer_name: string
@@ -31,8 +25,6 @@ export default function CheckinClient() {
   const router = useRouter()
 
   const token = searchParams.get('t')
-  const streamerId = searchParams.get('streamerId')
-  const dateParam = searchParams.get('date') ?? ''
 
   const [status, setStatus] = useState<PageStatus>('loading')
   const [loaded, setLoaded] = useState<LoadedData | null>(null)
@@ -43,74 +35,45 @@ export default function CheckinClient() {
   const [errorMsg, setErrorMsg] = useState('')
 
   // ----------------------------------------------------------------
-  // 初期ロード：テンプレ取得 or トークン検証
+  // 初期ロード：トークン検証
   // ----------------------------------------------------------------
   useEffect(() => {
-    // --- テストモード ---
-    if (streamerId) {
-      const qs = new URLSearchParams({ streamer_id: streamerId })
-      if (dateParam) qs.set('date', dateParam)
-
-      fetch(`/api/checkin/load?${qs}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.error) {
-            setErrorMsg(data.error)
-            setStatus('error')
-            return
-          }
-          if (data.already_submitted) {
-            setStatus('already_submitted')
-            return
-          }
-          setLoaded(data)
-          setStatus('ready')
-        })
-        .catch(() => {
-          setErrorMsg('通信エラーが発生しました')
-          setStatus('error')
-        })
+    if (!token) {
+      setErrorMsg('URLが正しくありません。')
+      setStatus('error')
       return
     }
 
-    // --- 本番モード（TOKEN）---
-    if (token) {
-      fetch('/api/checkin/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+    fetch('/api/checkin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.valid) {
+          setErrorMsg(data.error ?? '無効なURLです')
+          setStatus('error')
+          return
+        }
+        if (data.already_submitted) {
+          setStatus('already_submitted')
+          return
+        }
+        setLoaded({
+          streamer_id: data.streamer_id,
+          streamer_name: '',
+          date: data.date,
+          template: data.template,
+          already_submitted: false,
+        })
+        setStatus('ready')
       })
-        .then((r) => r.json())
-        .then((data) => {
-          if (!data.valid) {
-            setErrorMsg(data.error ?? '無効なURLです')
-            setStatus('error')
-            return
-          }
-          if (data.already_submitted) {
-            setStatus('already_submitted')
-            return
-          }
-          setLoaded({
-            streamer_id: data.streamer_id,
-            streamer_name: '',
-            date: data.date,
-            template: data.template,
-            already_submitted: false,
-          })
-          setStatus('ready')
-        })
-        .catch(() => {
-          setErrorMsg('通信エラーが発生しました')
-          setStatus('error')
-        })
-      return
-    }
-
-    // どちらもない
-    setErrorMsg('URLが正しくありません。streamerId または t パラメータが必要です。')
-    setStatus('error')
-  }, [token, streamerId, dateParam])
+      .catch(() => {
+        setErrorMsg('通信エラーが発生しました')
+        setStatus('error')
+      })
+  }, [token])
 
   // ----------------------------------------------------------------
   // フォーム送信
@@ -154,30 +117,11 @@ export default function CheckinClient() {
     setStatus('submitting')
 
     try {
-      let res: Response
-
-      if (token) {
-        // 本番：トークンで送信（diamonds + レベル更新を含む）
-        res = await fetch('/api/self-check', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds), streaming_minutes: Number(streamingMinutes) }),
-        })
-      } else {
-        // テスト：直接送信
-        res = await fetch('/api/checkin/direct', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            streamer_id: loaded!.streamer_id,
-            date: loaded!.date,
-            answers,
-            memo,
-            diamonds: Number(diamonds),
-            streaming_minutes: Number(streamingMinutes),
-          }),
-        })
-      }
+      const res = await fetch('/api/self-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds), streaming_minutes: Number(streamingMinutes) }),
+      })
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? '送信に失敗しました')
