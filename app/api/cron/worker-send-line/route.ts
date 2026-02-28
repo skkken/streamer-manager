@@ -66,15 +66,19 @@ export async function POST(req: NextRequest) {
     // 配信者情報取得
     const { data: streamer } = await supabase
       .from('streamers')
-      .select('id, display_name, line_user_id, notify_enabled, status')
+      .select('id, display_name, line_user_id, notify_enabled, status, level_override, level_current')
       .eq('id', job.streamer_id)
       .single()
 
-    // 無効化された場合はスキップ
+    // レベル未設定の場合はスキップ
+    const effectiveLevel = streamer?.level_override ?? streamer?.level_current ?? null
+
+    // 無効化またはレベル未設定の場合はスキップ
     if (
       !streamer ||
       streamer.status !== 'active' ||
-      !streamer.notify_enabled
+      !streamer.notify_enabled ||
+      effectiveLevel === null
     ) {
       await supabase
         .from('line_jobs')
