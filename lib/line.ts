@@ -80,7 +80,7 @@ export async function replyLineMessages(
 ): Promise<void> {
   const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
   if (!token) return
-  await fetch('https://api.line.me/v2/bot/message/reply', {
+  const res = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -88,6 +88,10 @@ export async function replyLineMessages(
     },
     body: JSON.stringify({ replyToken, messages }),
   })
+  if (!res.ok) {
+    const body = await res.text()
+    console.error('[replyLineMessages] LINE API error:', res.status, body)
+  }
 }
 
 /** チェックインURL付き Flex Message を構築（配信終了・リマインダー共通） */
