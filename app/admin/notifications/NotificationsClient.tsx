@@ -59,7 +59,15 @@ export default function NotificationsClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ streamer_ids: Array.from(selected), date: targetDate }),
       })
-      const data = await res.json()
+      const text = await res.text()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any
+      try {
+        data = JSON.parse(text)
+      } catch {
+        setResult(`エラー: サーバーエラー (${res.status})`)
+        return
+      }
       if (!res.ok) {
         setResult(`エラー: ${data.error}`)
       } else {
