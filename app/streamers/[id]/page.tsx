@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import StreamerDetailClient from './StreamerDetailClient'
 import { SelfCheck, TemplateField, TemplateSchema } from '@/lib/types'
+import { getJstDateString, getJstNow } from '@/lib/jst'
 
 function yesRatio(answers: Record<string, boolean | string>): number {
   const vals = Object.values(answers).filter((v) => typeof v === 'boolean')
@@ -15,21 +16,21 @@ function computeStats(
   totalDiamonds: number,
   earnings: { date: string; diamonds: number; streaming_minutes: number }[]
 ) {
-  const today = new Date()
-  const monthKey = today.toISOString().slice(0, 7)
-  const todayStr = today.toISOString().slice(0, 10)
+  const todayStr = getJstDateString()
+  const monthKey = todayStr.slice(0, 7)
 
   // 今月ダイヤ
   const monthDiamonds = earnings
     .filter((r) => r.date.startsWith(monthKey))
     .reduce((sum, r) => sum + (r.diamonds ?? 0), 0)
 
-  // 今週の月曜日を計算（月=1, 日=7）
-  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay()
+  // 今週の月曜日を計算（月=1, 日=7）（JST営業日基準）
+  const jstNow = getJstNow()
+  const dayOfWeek = jstNow.getUTCDay() === 0 ? 7 : jstNow.getUTCDay()
   const weekDenominator = dayOfWeek
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (dayOfWeek - 1))
-  const mondayStr = monday.toISOString().slice(0, 10)
+  const monday = new Date(jstNow)
+  monday.setUTCDate(jstNow.getUTCDate() - (dayOfWeek - 1))
+  const mondayStr = getJstDateString(monday)
 
   // チェックイン回答率: 今週（月〜今日）
   const weekChecks = checks.filter((c) => c.date >= mondayStr && c.date <= todayStr)

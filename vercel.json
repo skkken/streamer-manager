@@ -1,9 +1,9 @@
 {
   "crons": [
-    { "path": "/api/cron/schedule-daily-checkin", "schedule": "5 15 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "10 15 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "20 15 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "35 15 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "50 15 * * *" }
+    { "path": "/api/cron/schedule-daily-checkin", "schedule": "5 20 * * *" },
+    { "path": "/api/cron/worker-send-line", "schedule": "10 20 * * *" },
+    { "path": "/api/cron/worker-send-line", "schedule": "20 20 * * *" },
+    { "path": "/api/cron/worker-send-line", "schedule": "35 20 * * *" },
+    { "path": "/api/cron/worker-send-line", "schedule": "50 20 * * *" }
   ]
 }

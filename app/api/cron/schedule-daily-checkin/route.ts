@@ -6,8 +6,8 @@ import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
 /**
  * POST /api/cron/schedule-daily-checkin
  *
- * Vercel Cron: 毎日 00:05 JST = 15:05 UTC
- * vercel.json: { "crons": [{ "path": "/api/cron/schedule-daily-checkin", "schedule": "5 15 * * *" }] }
+ * Vercel Cron: 毎日 05:05 JST = 20:05 UTC（営業日境界 05:00 の直後）
+ * vercel.json: { "crons": [{ "path": "/api/cron/schedule-daily-checkin", "schedule": "5 20 * * *" }] }
  *
  * 処理:
  * 1. notify_enabled=true の active 配信者を全取得

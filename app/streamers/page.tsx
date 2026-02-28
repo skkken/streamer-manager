@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card'
 import { createServerClient } from '@/lib/supabase/server'
 import { Streamer, StaffNoteStatus } from '@/lib/types'
 import StreamersTable, { StreamerRow } from './StreamersTable'
+import { getJstDateString, getJstNow } from '@/lib/jst'
 
 
 
@@ -18,16 +19,16 @@ async function getData(): Promise<StreamerRow[]> {
   try {
     const supabase = createServerClient()
 
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
-    const monthKey = today.toISOString().slice(0, 7)
+    const todayStr = getJstDateString()
+    const monthKey = todayStr.slice(0, 7)
 
-    // 今週の月曜日を計算（月=1, 日=7）
-    const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay()
+    // 今週の月曜日を計算（月=1, 日=7）（JST営業日基準）
+    const jstNow = getJstNow()
+    const dayOfWeek = jstNow.getUTCDay() === 0 ? 7 : jstNow.getUTCDay()
     const weekDenominator = dayOfWeek
-    const monday = new Date(today)
-    monday.setDate(today.getDate() - (dayOfWeek - 1))
-    const mondayStr = monday.toISOString().slice(0, 10)
+    const monday = new Date(jstNow)
+    monday.setUTCDate(jstNow.getUTCDate() - (dayOfWeek - 1))
+    const mondayStr = getJstDateString(monday)
 
     const [streamersRes, earningsRes, checksRes, notesRes] = await Promise.all([
       supabase.from('streamers').select('*').order('created_at', { ascending: false }),

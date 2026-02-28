@@ -1,5 +1,6 @@
 'use client'
 
+import { getJstDateString } from '@/lib/jst'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card, { CardBody } from '@/components/ui/Card'
@@ -102,7 +103,7 @@ export default function StreamerDetailClient({
   const [notesList, setNotesList] = useState<StaffNote[]>(initialNotes)
   const [showNoteForm, setShowNoteForm] = useState(false)
   const [noteForm, setNoteForm] = useState({
-    date: new Date().toISOString().slice(0, 10),
+    date: getJstDateString(),
     category: '',
     current_state: '',
     action: '',
@@ -209,7 +210,7 @@ export default function StreamerDetailClient({
       setNotesList([newNote, ...notesList])
       setShowNoteForm(false)
       setNoteForm({
-        date: new Date().toISOString().slice(0, 10),
+        date: getJstDateString(),
         category: '',
         current_state: '',
         action: '',
