@@ -58,6 +58,21 @@ export async function POST(req: NextRequest) {
     .update({ status: 'sending', locked_at: nowIso })
     .in('id', jobIds)
 
+  // チャネルトークンをキャッシュ（同一バッチ内で重複取得を避ける）
+  const channelTokenCache = new Map<string, string>()
+  async function getChannelToken(lineChannelId: string | null): Promise<string | undefined> {
+    if (!lineChannelId) return undefined
+    if (channelTokenCache.has(lineChannelId)) return channelTokenCache.get(lineChannelId)
+    const { data: ch } = await supabase
+      .from('line_channels')
+      .select('channel_access_token')
+      .eq('id', lineChannelId)
+      .single()
+    const token = ch?.channel_access_token as string | undefined
+    if (token) channelTokenCache.set(lineChannelId, token)
+    return token
+  }
+
   let sent = 0
   let failed = 0
   let skipped = 0
@@ -69,6 +84,9 @@ export async function POST(req: NextRequest) {
       .select('id, display_name, line_user_id, notify_enabled, status, level_override, level_current')
       .eq('id', job.streamer_id)
       .single()
+
+    // チャネルトークンを解決
+    const channelToken = await getChannelToken(job.line_channel_id as string | null)
 
     // レベル未設定（0含む）の場合はスキップ
     const effectiveLevel = streamer?.level_override ?? (streamer?.level_current || null)
@@ -120,7 +138,7 @@ export async function POST(req: NextRequest) {
         const [, mm, dd] = today.split('-')
         const dateLabel = `${Number(mm)}月${Number(dd)}日`
         const msg = buildCheckinMessage(streamer.display_name, url, dateLabel)
-        sendResult = await sendLineMessage(streamer.line_user_id, [msg])
+        sendResult = await sendLineMessage(streamer.line_user_id, [msg], channelToken)
       }
     } else if (job.kind === 'checkin_thanks') {
       // 当日のself_checkのai_typeを取得
@@ -133,7 +151,7 @@ export async function POST(req: NextRequest) {
 
       const aiType = (check?.ai_type as AiType) ?? 'NORMAL'
       const msg = buildThanksMessage(aiType, messages)
-      sendResult = await sendLineMessage(streamer.line_user_id, [msg])
+      sendResult = await sendLineMessage(streamer.line_user_id, [msg], channelToken)
     } else {
       sendResult = { ok: false, error: `unknown kind: ${job.kind}` }
     }

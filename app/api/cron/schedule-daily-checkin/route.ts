@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   // active + 通知有効な配信者を取得
   const { data: streamers, error: sErr } = await supabase
     .from('streamers')
-    .select('id, display_name, line_user_id')
+    .select('id, display_name, line_user_id, line_channel_id')
     .eq('status', 'active')
     .eq('notify_enabled', true)
 
@@ -76,9 +76,7 @@ export async function POST(req: NextRequest) {
           kind: 'daily_checkin',
           status: 'queued',
           attempts: 0,
-          // ジョブのメタデータとして checkin URL を last_error に一時保存しない
-          // → ワーカー側でトークンを再生成せず、DBのトークンハッシュからURLを生成不可のため
-          //   代わりに別テーブルから checkin_tokens を再引きする
+          line_channel_id: streamer.line_channel_id,
         },
         { onConflict: 'streamer_id,date,kind', ignoreDuplicates: true }
       )

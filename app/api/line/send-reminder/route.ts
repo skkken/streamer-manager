@@ -42,11 +42,24 @@ export async function POST(req: NextRequest) {
 
     const { data: streamers } = await supabase
       .from('streamers')
-      .select('id, display_name, line_user_id')
+      .select('id, display_name, line_user_id, line_channel_id')
       .in('id', streamer_ids)
 
     if (!streamers?.length) {
       return NextResponse.json({ error: '対象の配信者が見つかりません' }, { status: 404 })
+    }
+
+    // チャネルトークンをまとめて取得
+    const channelIds = [...new Set(streamers.map(s => s.line_channel_id).filter(Boolean))] as string[]
+    const channelTokenMap = new Map<string, string>()
+    if (channelIds.length > 0) {
+      const { data: channels } = await supabase
+        .from('line_channels')
+        .select('id, channel_access_token')
+        .in('id', channelIds)
+      for (const ch of channels ?? []) {
+        channelTokenMap.set(ch.id, ch.channel_access_token)
+      }
     }
 
     let sent = 0
@@ -59,6 +72,10 @@ export async function POST(req: NextRequest) {
         failed++
         continue
       }
+
+      const channelToken = streamer.line_channel_id
+        ? channelTokenMap.get(streamer.line_channel_id)
+        : undefined
 
       // トークン発行（既存があれば上書き）
       const rawToken = generateToken()
@@ -87,7 +104,7 @@ export async function POST(req: NextRequest) {
 
       const result = await sendLineMessage(streamer.line_user_id, [
         { type: 'text', text },
-      ])
+      ], channelToken)
 
       if (result.ok) {
         sent++
