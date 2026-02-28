@@ -31,7 +31,7 @@ async function getData(): Promise<StreamerRow[]> {
 
     const [streamersRes, earningsRes, checksRes, notesRes] = await Promise.all([
       supabase.from('streamers').select('*').order('created_at', { ascending: false }),
-      supabase.from('daily_earnings').select('streamer_id, date, diamonds'),
+      supabase.from('daily_earnings').select('streamer_id, date, diamonds, streaming_minutes'),
       supabase
         .from('self_checks')
         .select('streamer_id, date, answers')
@@ -45,13 +45,17 @@ async function getData(): Promise<StreamerRow[]> {
 
     const streamers: Streamer[] = streamersRes.data ?? []
 
-    // ダイヤ集計（累計 & 今月）
+    // ダイヤ・配信時間集計（累計 & 今月）
     const totalDiamondMap = new Map<string, number>()
     const monthDiamondMap = new Map<string, number>()
+    const totalStreamingMap = new Map<string, number>()
+    const monthStreamingMap = new Map<string, number>()
     for (const r of earningsRes.data ?? []) {
       totalDiamondMap.set(r.streamer_id, (totalDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
+      totalStreamingMap.set(r.streamer_id, (totalStreamingMap.get(r.streamer_id) ?? 0) + (r.streaming_minutes ?? 0))
       if (r.date.startsWith(monthKey)) {
         monthDiamondMap.set(r.streamer_id, (monthDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
+        monthStreamingMap.set(r.streamer_id, (monthStreamingMap.get(r.streamer_id) ?? 0) + (r.streaming_minutes ?? 0))
       }
     }
 
@@ -81,6 +85,8 @@ async function getData(): Promise<StreamerRow[]> {
         ...s,
         totalDiamonds: totalDiamondMap.get(s.id) ?? 0,
         monthDiamonds: monthDiamondMap.get(s.id) ?? 0,
+        totalStreamingMinutes: totalStreamingMap.get(s.id) ?? 0,
+        monthStreamingMinutes: monthStreamingMap.get(s.id) ?? 0,
         checkinRate: cnt / weekDenominator,
         weekYes: weekCnt > 0 ? (weekYesSumMap.get(s.id) ?? 0) / weekCnt : null,
         latestNoteStatus: latestNoteStatusMap.get(s.id) ?? null,

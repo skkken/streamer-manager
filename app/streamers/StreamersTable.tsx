@@ -10,9 +10,19 @@ import { Streamer, StreamerStatus, StaffNoteStatus } from '@/lib/types'
 export type StreamerRow = Streamer & {
   totalDiamonds: number
   monthDiamonds: number
+  totalStreamingMinutes: number
+  monthStreamingMinutes: number
   checkinRate: number
   weekYes: number | null
   latestNoteStatus: StaffNoteStatus | null
+}
+
+function formatMinutes(m: number): string {
+  const h = Math.floor(m / 60)
+  const min = m % 60
+  if (h === 0) return `${min}分`
+  if (min === 0) return `${h}時間`
+  return `${h}時間${min}分`
 }
 
 const noteStatusVariant: Record<StaffNoteStatus, 'green' | 'yellow' | 'red' | 'gray' | 'blue'> = {
@@ -170,11 +180,13 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
                   累計ダイヤ
                   <SortIcon active={sortKey === 'totalDiamonds'} dir={sortDir} />
                 </th>
+                <th className="text-right px-4 py-3 text-gray-600 font-medium">今月配信時間</th>
+                <th className="text-right px-4 py-3 text-gray-600 font-medium">累計配信時間</th>
                 <th
                   className="text-right px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-indigo-600"
                   onClick={() => handleSort('checkinRate')}
                 >
-                  チェックイン回答率(今週)
+                  回答率
                   <SortIcon active={sortKey === 'checkinRate'} dir={sortDir} />
                 </th>
                 <th
@@ -218,6 +230,12 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
                     {s.totalDiamonds.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-700">
+                    {formatMinutes(s.monthStreamingMinutes)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-700">
+                    {formatMinutes(s.totalStreamingMinutes)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-700">
                     {pct(s.checkinRate)}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-700">
@@ -243,7 +261,7 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-6 py-8 text-center text-sm text-gray-400">
+                  <td colSpan={13} className="px-6 py-8 text-center text-sm text-gray-400">
                     該当する配信者がいません
                   </td>
                 </tr>

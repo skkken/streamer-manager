@@ -320,7 +320,7 @@ export default function StreamerDetailClient({
                 <InfoRow label="累計総獲得ダイヤ">
                   <span className="font-medium">{stats.totalDiamonds.toLocaleString()}</span>
                 </InfoRow>
-                <InfoRow label="チェックイン回答率（今週）">
+                <InfoRow label="回答率（今週）">
                   <span className="font-medium">{pct(stats.checkinRate)}</span>
                 </InfoRow>
                 <InfoRow label="直近のYES割合">
