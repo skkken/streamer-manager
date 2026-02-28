@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth-guard'
 
 // GET /api/message-settings
 export async function GET() {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   try {
     const supabase = createServerClient()
     const { data, error } = await supabase
@@ -21,6 +25,9 @@ export async function GET() {
 // PATCH /api/message-settings
 // body: { key: string; value: string }[]
 export async function PATCH(req: NextRequest) {
+  const { errorResponse: patchAuthErr } = await requireAuth()
+  if (patchAuthErr) return patchAuthErr
+
   let body: { key: string; value: string }[]
   try {
     body = await req.json()

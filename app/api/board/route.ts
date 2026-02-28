@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { BoardItem, BoardPriority } from '@/lib/types'
+import { requireAuth } from '@/lib/auth-guard'
 
 const NEGATIVE_WORDS = ['辞め', '無理', '辛い', 'しんどい', '向いてない', 'きつい']
 
@@ -11,6 +12,9 @@ function detectNegativeInText(text: string | null): boolean {
 }
 
 export async function GET() {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const today = getJstDateString()
 

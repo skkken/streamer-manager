@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth-guard'
 
 type Params = { params: Promise<{ id: string }> }
 
 // GET /api/streamers/[id]
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { id } = await params
   const { data, error } = await supabase
@@ -21,6 +25,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // PATCH /api/streamers/[id]
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { errorResponse: patchAuthErr } = await requireAuth()
+  if (patchAuthErr) return patchAuthErr
+
   const supabase = createServerClient()
   const { id } = await params
   const body = await req.json()
@@ -46,6 +53,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 // DELETE /api/streamers/[id]
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { errorResponse: delAuthErr } = await requireAuth()
+  if (delAuthErr) return delAuthErr
+
   const supabase = createServerClient()
   const { id } = await params
   const { error } = await supabase

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { TemplateSchema } from '@/lib/types'
+import { requireAuth } from '@/lib/auth-guard'
 
 export async function GET() {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { data, error } = await supabase
     .from('self_check_templates')
@@ -16,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const { errorResponse: postAuthErr } = await requireAuth()
+  if (postAuthErr) return postAuthErr
+
   const supabase = createServerClient()
   const body = await req.json()
 

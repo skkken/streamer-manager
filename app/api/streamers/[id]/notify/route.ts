@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth-guard'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -9,6 +10,9 @@ type Params = { params: Promise<{ id: string }> }
  * 通知ON/OFFを切り替え
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { id } = await params
   const { notify_enabled } = await req.json()

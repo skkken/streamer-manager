@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth-guard'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -9,6 +10,9 @@ type Params = { params: Promise<{ id: string }> }
  * body: { display_name, tiktok_id?, agency_name?, manager_name? }
  */
 export async function POST(req: NextRequest, { params }: Params) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { id } = await params
   const body = await req.json()
@@ -65,6 +69,9 @@ export async function POST(req: NextRequest, { params }: Params) {
  * 登録待ちを削除（スパム・誤登録の除去用）
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { errorResponse: delAuthErr } = await requireAuth()
+  if (delAuthErr) return delAuthErr
+
   const supabase = createServerClient()
   const { id } = await params
 

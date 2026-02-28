@@ -4,6 +4,7 @@ import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
+import { requireAuth } from '@/lib/auth-guard'
 
 /**
  * POST /api/line/send-reminder
@@ -13,6 +14,9 @@ import { getMessageSettings } from '@/lib/messages'
  * date を指定すると過去の未入力日分のトークンを発行できる
  */
 export async function POST(req: NextRequest) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   try {
     const { streamer_ids, date: requestDate } = (await req.json()) as {
       streamer_ids: string[]

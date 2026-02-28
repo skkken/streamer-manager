@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import LogoutButton from './LogoutButton'
 
 const navItems = [
   { label: '配信者一覧', href: '/streamers' },
@@ -41,8 +42,9 @@ export default function Sidebar() {
           )
         })}
       </nav>
-      <div className="px-6 py-4 border-t border-gray-700 text-xs text-gray-500">
-        v0.1.0
+      <div className="px-6 py-4 border-t border-gray-700 space-y-2">
+        <LogoutButton />
+        <p className="text-xs text-gray-500">v0.1.0</p>
       </div>
     </aside>
   )

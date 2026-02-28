@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth-guard'
 
 // GET /api/streamers  — 一覧取得
 export async function GET(req: NextRequest) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
@@ -26,6 +30,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/streamers  — 作成
 export async function POST(req: NextRequest) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   let body: Record<string, unknown>
   try {
     body = await req.json()

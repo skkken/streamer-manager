@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
+import { requireAuth } from '@/lib/auth-guard'
 
 /**
  * GET /api/line-jobs?date=YYYY-MM-DD&status=queued
  * ジョブ一覧を取得（管理画面用）
  */
 export async function GET(req: NextRequest) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const supabase = createServerClient()
   const { searchParams } = new URL(req.url)
   const date = searchParams.get('date') ?? getJstDateString()
