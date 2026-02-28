@@ -1,3 +1,13 @@
+import * as Sentry from '@sentry/nextjs'
+
 export async function register() {
-  // Sentry 除去済み — 将来的にサーバーサイド計装が必要なら追加
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./sentry.server.config')
+  }
+
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('./sentry.edge.config')
+  }
 }
+
+export const onRequestError = Sentry.captureRequestError
