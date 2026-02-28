@@ -7,9 +7,9 @@ export type StreamerStatus = 'active' | 'paused' | 'graduated' | 'dropped'
 export type LineJobKind = 'daily_checkin' | 'checkin_thanks'
 export type LineJobStatus = 'queued' | 'sending' | 'sent' | 'failed' | 'skipped'
 
-export type StaffNoteStatus = 'open' | 'watching' | 'closed'
+export type StaffNoteStatus = 'preparing' | 'good' | 'mostly_good' | 'caution' | 'danger'
 
-export type AiType = 'GOOD' | 'NORMAL' | 'SUPPORT'
+export type AiType = 'VERY_GOOD' | 'GOOD' | 'NORMAL' | 'BAD' | 'VERY_BAD'
 
 // ============================================================
 // Supabase row types
@@ -20,16 +20,22 @@ export interface Streamer {
   display_name: string
   status: StreamerStatus
   line_user_id: string
+  tiktok_id: string | null
+  agency_name: string | null
+  manager_name: string | null
   notify_enabled: boolean
   notes: string | null
   created_at: string
+  level_current: number
+  level_max: number
+  level_override: number | null
 }
 
 export interface SelfCheckTemplate {
   id: string
   name: string
-  version: string
   is_active: boolean
+  for_level: number
   schema: TemplateSchema
   created_at: string
 }
@@ -91,6 +97,33 @@ export interface LineJob {
   attempts: number
   last_error: string | null
   locked_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DailyEarning {
+  id: string
+  streamer_id: string
+  date: string
+  diamonds: number
+  created_at: string
+  updated_at: string
+}
+
+export interface LevelThresholdMonthly {
+  level: number
+  threshold_diamonds_mtd: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StreamerMonthlyStat {
+  id: string
+  streamer_id: string
+  month: string
+  diamonds_mtd: number
+  level_mtd: number
   created_at: string
   updated_at: string
 }

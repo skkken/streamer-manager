@@ -27,7 +27,6 @@ create table if not exists streamers (
 create table if not exists self_check_templates (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
-  version     text not null,
   is_active   boolean not null default false,
   schema      jsonb not null,
   created_at  timestamptz not null default now()
@@ -87,8 +86,8 @@ create table if not exists staff_notes (
   current_state text not null default '',
   action        text not null default '',
   next_action   text not null default '',
-  status        text not null default 'open'
-                  check (status in ('open','watching','closed')),
+  status        text not null default 'preparing'
+                  check (status in ('preparing','good','mostly_good','caution','danger')),
   created_at    timestamptz not null default now()
 );
 
@@ -153,13 +152,166 @@ create trigger trg_line_jobs_updated_at
   for each row execute function update_updated_at();
 
 -- ============================================================
+-- daily_earnings
+-- ============================================================
+create table if not exists daily_earnings (
+  id          uuid primary key default gen_random_uuid(),
+  streamer_id uuid not null references streamers(id) on delete cascade,
+  date        date not null,
+  diamonds    int not null default 0 check (diamonds >= 0),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  unique (streamer_id, date)
+);
+
+create index if not exists idx_daily_earnings_streamer_date
+  on daily_earnings (streamer_id, date desc);
+
+drop trigger if exists trg_daily_earnings_updated_at on daily_earnings;
+create trigger trg_daily_earnings_updated_at
+  before update on daily_earnings
+  for each row execute function update_updated_at();
+
+-- ============================================================
+-- level_thresholds_monthly
+-- ============================================================
+create table if not exists level_thresholds_monthly (
+  level                  int primary key check (level between 1 and 4),
+  threshold_diamonds_mtd int not null,
+  is_active              boolean not null default true,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now()
+);
+
+insert into level_thresholds_monthly (level, threshold_diamonds_mtd) values
+  (1,   5000),
+  (2,  15000),
+  (3,  50000),
+  (4, 500000)
+on conflict do nothing;
+
+-- ============================================================
+-- streamer_monthly_stats
+-- ============================================================
+create table if not exists streamer_monthly_stats (
+  id           uuid primary key default gen_random_uuid(),
+  streamer_id  uuid not null references streamers(id) on delete cascade,
+  month        date not null,
+  diamonds_mtd int not null default 0,
+  level_mtd    int not null default 0 check (level_mtd between 0 and 4),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  unique (streamer_id, month)
+);
+
+create index if not exists idx_streamer_monthly_stats_streamer_month
+  on streamer_monthly_stats (streamer_id, month desc);
+
+drop trigger if exists trg_streamer_monthly_stats_updated_at on streamer_monthly_stats;
+create trigger trg_streamer_monthly_stats_updated_at
+  before update on streamer_monthly_stats
+  for each row execute function update_updated_at();
+
+-- ============================================================
+-- streamers tiktok_id / agency_name カラム追加
+-- ============================================================
+alter table streamers
+  add column if not exists tiktok_id    text,
+  add column if not exists agency_name  text;
+
+-- ============================================================
+-- streamers manager_name カラム追加
+-- ============================================================
+alter table streamers
+  add column if not exists manager_name text;
+
+-- ============================================================
+-- self_check_templates for_level カラム追加
+-- ============================================================
+alter table self_check_templates
+  add column if not exists for_level int not null default 0;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'self_check_templates_for_level_range'
+  ) then
+    alter table self_check_templates
+      add constraint self_check_templates_for_level_range
+      check (for_level between 0 and 4);
+  end if;
+end $$;
+
+-- ============================================================
+-- self_checks ai_type 制約を5種類に更新
+-- ============================================================
+alter table self_checks
+  drop constraint if exists self_checks_ai_type_check;
+
+alter table self_checks
+  add constraint self_checks_ai_type_check
+  check (ai_type in ('VERY_GOOD','GOOD','NORMAL','BAD','VERY_BAD'));
+
+-- ============================================================
+-- message_settings
+-- ============================================================
+create table if not exists message_settings (
+  key        text primary key,
+  value      text not null,
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists trg_message_settings_updated_at on message_settings;
+create trigger trg_message_settings_updated_at
+  before update on message_settings
+  for each row execute function update_updated_at();
+
+-- ============================================================
+-- streamers level カラム追加
+-- ============================================================
+alter table streamers
+  add column if not exists level_current  int not null default 0,
+  add column if not exists level_max      int not null default 0,
+  add column if not exists level_override int;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'streamers_level_current_range'
+  ) then
+    alter table streamers
+      add constraint streamers_level_current_range
+      check (level_current between 0 and 4);
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'streamers_level_max_range'
+  ) then
+    alter table streamers
+      add constraint streamers_level_max_range
+      check (level_max between 0 and 4);
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'streamers_level_override_range'
+  ) then
+    alter table streamers
+      add constraint streamers_level_override_range
+      check (level_override is null or level_override between 0 and 4);
+  end if;
+end $$;
+
+-- ============================================================
 -- サンプルデータ（任意 / 開発用）
 -- ============================================================
 -- テンプレート1件
-insert into self_check_templates (name, version, is_active, schema)
+insert into self_check_templates (name, is_active, schema)
 values (
   '標準テンプレ v1',
-  '1.0',
   true,
   '{
     "fields": [
