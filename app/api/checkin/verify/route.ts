@@ -39,12 +39,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ valid: false, error: 'token already used' }, { status: 409 })
   }
 
-  // アクティブテンプレを取得
-  const { data: template } = await supabase
+  // 配信者のレベルを取得してテンプレを選択
+  const { data: streamer } = await supabase
+    .from('streamers')
+    .select('level_override, level_current')
+    .eq('id', tokenRow.streamer_id)
+    .single()
+
+  const effectiveLevel = streamer?.level_override ?? streamer?.level_current ?? null
+
+  const { data: templates } = await supabase
     .from('self_check_templates')
     .select('*')
     .eq('is_active', true)
-    .single()
+
+  const template =
+    (templates ?? []).find((t) => t.for_level === effectiveLevel) ??
+    (templates ?? [])[0] ??
+    null
 
   if (!template) {
     return NextResponse.json(
