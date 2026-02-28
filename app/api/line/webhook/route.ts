@@ -114,7 +114,10 @@ export async function POST(req: NextRequest) {
               : 'http://localhost:3000')
           const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
 
-          const replyText = (messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから本日の自己評価を入力してください。\n\n{url}\n\n※URLは本日中のみ有効です。')
+          const [, mm, dd] = today.split('-')
+          const dateLabel = `${Number(mm)}月${Number(dd)}日`
+          const replyText = (messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。')
+            .replace('{date}', dateLabel)
             .replace('{url}', checkinUrl)
           await replyMessage(replyToken, replyText)
         }

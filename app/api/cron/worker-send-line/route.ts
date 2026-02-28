@@ -117,7 +117,9 @@ export async function POST(req: NextRequest) {
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
         const url = `${appUrl}/checkin?t=${rawToken}`
-        const msg = buildCheckinMessage(streamer.display_name, url)
+        const [, mm, dd] = today.split('-')
+        const dateLabel = `${Number(mm)}月${Number(dd)}日`
+        const msg = buildCheckinMessage(streamer.display_name, url, dateLabel)
         sendResult = await sendLineMessage(streamer.line_user_id, [msg])
       }
     } else if (job.kind === 'checkin_thanks') {

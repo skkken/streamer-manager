@@ -77,8 +77,7 @@ export async function POST(req: NextRequest) {
       // "2026-02-28" → "2月28日"
       const [, mm, dd] = targetDate.split('-')
       const dateLabel = `${Number(mm)}月${Number(dd)}日`
-      const defaultMsg = '【リマインド】\n{name}さん、{date}の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは翌日昼まで有効です。'
-      const text = (messages.line_checkin_reminder ?? defaultMsg)
+      const text = messages.line_checkin_reminder
         .replace('{name}', streamer.display_name)
         .replace('{url}', checkinUrl)
         .replace('{date}', dateLabel)

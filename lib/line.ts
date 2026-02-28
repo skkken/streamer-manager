@@ -50,10 +50,10 @@ export async function sendLineMessage(
 }
 
 /** 自己評価リンクのメッセージ */
-export function buildCheckinMessage(name: string, url: string): LineMessage {
+export function buildCheckinMessage(name: string, url: string, dateLabel: string): LineMessage {
   return {
     type: 'text',
-    text: `【本日の自己評価】\n${name}さん、お疲れさまです。\n本日の自己評価の入力をお願いします。\n\n${url}\n\n※URLは本日中のみ有効です。`,
+    text: `【${dateLabel}の自己評価】\n${name}さん、お疲れさまです。\n${dateLabel}の自己評価の入力をお願いします。\n\n${url}\n\n※URLは翌日昼まで有効です。`,
   }
 }
 

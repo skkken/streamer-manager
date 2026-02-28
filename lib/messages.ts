@@ -51,9 +51,9 @@ export const DEFAULT_MESSAGES: MessageSettings = {
 
   line_stream_end_keyword: '配信終了',
   line_stream_end_reply:
-    '配信お疲れさまでした！\n以下のリンクから本日の自己評価を入力してください。\n\n{url}\n\n※URLは本日中のみ有効です。',
+    '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。',
   line_checkin_reminder:
-    '【リマインド】\n{name}さん、本日の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは本日中のみ有効です。',
+    '【リマインド】\n{name}さん、{date}の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは翌日昼まで有効です。',
 }
 
 /** DBから設定を取得。失敗時はデフォルト値にフォールバック */
