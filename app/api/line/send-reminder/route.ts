@@ -30,7 +30,11 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerClient()
     const messages = await getMessageSettings()
-    const expiresAt = getTokenExpiry(targetDate).toISOString()
+    // 過去日付の場合、対象日ベースの有効期限が既に切れている可能性があるため
+    // 「対象日ベース」と「現在日ベース（翌日12:00 JST）」の遅い方を使う
+    const targetExpiry = getTokenExpiry(targetDate)
+    const todayExpiry = getTokenExpiry() // 今日の翌日12:00 JST
+    const expiresAt = (targetExpiry > todayExpiry ? targetExpiry : todayExpiry).toISOString()
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ??
       (process.env.VERCEL_PROJECT_PRODUCTION_URL
