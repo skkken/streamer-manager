@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import AdminLayout from '@/components/layout/AdminLayout'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'

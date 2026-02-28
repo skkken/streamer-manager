@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import AdminLayout from '@/components/layout/AdminLayout'
 import { createServerClient } from '@/lib/supabase/server'
 import LineChannelsClient from './LineChannelsClient'
