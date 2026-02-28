@@ -14,12 +14,16 @@ export async function GET() {
       .from('message_settings')
       .select('key, value')
       .order('key')
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('GET /api/message-settings:', error)
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
     const settings: Record<string, string> = {}
     for (const row of data ?? []) settings[row.key] = row.value
     return NextResponse.json(settings)
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'error' }, { status: 500 })
+    console.error('GET /api/message-settings:', e)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 }
 
@@ -39,9 +43,13 @@ export async function PATCH(req: NextRequest) {
     const { error } = await supabase
       .from('message_settings')
       .upsert(rows, { onConflict: 'key' })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('PATCH /api/message-settings:', error)
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'error' }, { status: 500 })
+    console.error('PATCH /api/message-settings:', e)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 }

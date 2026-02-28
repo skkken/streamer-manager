@@ -25,7 +25,8 @@ export async function PATCH(
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('PATCH /api/staff-notes/[id]:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
 }

@@ -19,7 +19,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 })
+    console.error('GET /api/templates/[id]:', error)
+    return NextResponse.json({ error: 'テンプレートが見つかりません' }, { status: 404 })
   }
   return NextResponse.json(data)
 }
@@ -61,7 +62,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('PATCH /api/templates/[id]:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
 }
@@ -94,7 +96,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .eq('id', id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('DELETE /api/templates/[id]:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return new NextResponse(null, { status: 204 })
 }

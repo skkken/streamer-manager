@@ -51,7 +51,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (streamerErr) {
-    return NextResponse.json({ error: streamerErr.message }, { status: 500 })
+    console.error('POST /api/line/registrations/[id]:', streamerErr)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
 
   // 登録待ちを登録済みにマーク
@@ -80,7 +81,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .eq('id', id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('DELETE /api/line/registrations/[id]:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return new NextResponse(null, { status: 204 })
 }

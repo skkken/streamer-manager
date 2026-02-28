@@ -29,7 +29,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('PATCH /api/streamers/[id]/notify:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
 }

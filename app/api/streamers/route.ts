@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('GET /api/streamers:', error)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   return NextResponse.json(data)
 }
@@ -50,8 +51,9 @@ export async function POST(req: NextRequest) {
   try {
     supabase = createServerClient()
   } catch (e) {
+    console.error('POST /api/streamers (init):', e)
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Supabase 設定エラー' },
+      { error: 'サービスが一時的に利用できません' },
       { status: 503 }
     )
   }
@@ -70,12 +72,14 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         )
       }
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('POST /api/streamers:', error)
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
     return NextResponse.json({ success: true, id: data?.[0]?.id }, { status: 201 })
   } catch (e) {
+    console.error('POST /api/streamers:', e)
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'データベースエラー' },
+      { error: 'サーバーエラーが発生しました' },
       { status: 500 }
     )
   }
