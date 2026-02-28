@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { createHmac } from 'crypto'
+import { getMessageSettings } from '@/lib/messages'
 
 /** LINE Reply API でメッセージを送信 */
 async function replyMessage(replyToken: string, text: string): Promise<void> {
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createServerClient()
+  const messages = await getMessageSettings()
 
   for (const event of payload.events) {
     if (event.type !== 'follow' && event.type !== 'message') continue
@@ -96,7 +98,7 @@ export async function POST(req: NextRequest) {
       })
 
       if (replyToken) {
-        await replyMessage(replyToken, '登録を開始します。\nあなたの名前（本名またはニックネーム）を入力してください。')
+        await replyMessage(replyToken, messages.line_reg_welcome)
       }
       continue
     }
@@ -121,7 +123,7 @@ export async function POST(req: NextRequest) {
           .update({ input_name: text, step: 'ask_tiktok' })
           .eq('id', reg.id)
         if (replyToken) {
-          await replyMessage(replyToken, `ありがとうございます！\n次に、TikTok IDを入力してください。\n（例: @your_tiktok_id）`)
+          await replyMessage(replyToken, messages.line_reg_ask_tiktok)
         }
       } else if (reg.step === 'ask_tiktok') {
         await supabase
@@ -129,7 +131,7 @@ export async function POST(req: NextRequest) {
           .update({ tiktok_id: text, step: 'ask_office' })
           .eq('id', reg.id)
         if (replyToken) {
-          await replyMessage(replyToken, `ありがとうございます！\n最後に、所属事務所名を入力してください。\n（事務所に所属していない場合は「なし」と入力してください）`)
+          await replyMessage(replyToken, messages.line_reg_ask_office)
         }
       } else if (reg.step === 'ask_office') {
         await supabase
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
           .update({ office_name: text, step: 'done' })
           .eq('id', reg.id)
         if (replyToken) {
-          await replyMessage(replyToken, '登録情報を受け付けました！\nスタッフが確認後、ご連絡いたします。しばらくお待ちください。')
+          await replyMessage(replyToken, messages.line_reg_done)
         }
       }
     }

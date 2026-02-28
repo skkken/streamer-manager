@@ -52,6 +52,16 @@ const SECTIONS = [
       { key: 'done_footer', label: 'フッターテキスト' },
     ],
   },
+  {
+    title: 'LINE登録メッセージ（友だち追加時の会話フロー）',
+    note: '配信者がLINEで友だち追加した際に、登録情報を順番に聞く自動メッセージです。',
+    fields: [
+      { key: 'line_reg_welcome', label: '初回メッセージ（名前を聞く）' },
+      { key: 'line_reg_ask_tiktok', label: 'TikTok ID を聞く' },
+      { key: 'line_reg_ask_office', label: '所属事務所を聞く' },
+      { key: 'line_reg_done', label: '登録完了メッセージ' },
+    ],
+  },
 ]
 
 export default function MessagesClient({ initial }: { initial: MessageSettings }) {

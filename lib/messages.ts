@@ -39,6 +39,15 @@ export const DEFAULT_MESSAGES: MessageSettings = {
 
   done_negative_supplement: '必要であれば、スタッフに相談して大丈夫です。',
   done_footer: 'お疲れさまでした。このページは閉じて大丈夫です。',
+
+  line_reg_welcome:
+    '登録を開始します。\nあなたの名前（本名またはニックネーム）を入力してください。',
+  line_reg_ask_tiktok:
+    'ありがとうございます！\n次に、TikTok IDを入力してください。\n（例: @your_tiktok_id）',
+  line_reg_ask_office:
+    'ありがとうございます！\n最後に、所属事務所名を入力してください。\n（事務所に所属していない場合は「なし」と入力してください）',
+  line_reg_done:
+    '登録情報を受け付けました！\nスタッフが確認後、ご連絡いたします。しばらくお待ちください。',
 }
 
 /** DBから設定を取得。失敗時はデフォルト値にフォールバック */
