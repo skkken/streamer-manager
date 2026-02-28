@@ -134,6 +134,29 @@ export const messageSettingsSchema = z.array(
 // LINE
 // ============================================================
 
+// ============================================================
+// LINE チャネル
+// ============================================================
+
+export const createLineChannelSchema = z.object({
+  name: z.string().min(1, '事務所名は必須です').max(100),
+  channel_id: z.string().min(1, 'チャネルIDは必須です').max(200),
+  channel_secret: z.string().min(1, 'チャネルシークレットは必須です').max(200),
+  channel_access_token: z.string().min(1, 'アクセストークンは必須です').max(500),
+})
+
+export const updateLineChannelSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  channel_id: z.string().min(1).max(200).optional(),
+  channel_secret: z.string().min(1).max(200).optional(),
+  channel_access_token: z.string().min(1).max(500).optional(),
+  is_active: z.boolean().optional(),
+})
+
+// ============================================================
+// LINE リマインダー
+// ============================================================
+
 export const sendReminderSchema = z.object({
   streamer_ids: z.array(uuidSchema).min(1, '配信者が指定されていません').max(200),
   date: dateSchema.optional(),

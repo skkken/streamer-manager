@@ -9,6 +9,7 @@ const navItems = [
   { label: 'テンプレ管理', href: '/templates' },
   { label: '運用ボード', href: '/board' },
   { label: 'LINE登録待ち', href: '/admin/line-registrations' },
+  { label: 'LINEチャネル', href: '/admin/line-channels' },
   { label: '通知ジョブ', href: '/admin/notifications' },
   { label: 'メッセージ設定', href: '/admin/messages' },
   { label: 'エラーログ', href: '/admin/errors' },
