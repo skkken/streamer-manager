@@ -59,7 +59,7 @@ function pct(v: number | null): string {
   return `${Math.round(v * 100)}%`
 }
 
-type SortKey = 'monthDiamonds' | 'totalDiamonds' | 'checkinRate' | 'weekYes'
+type SortKey = 'monthDiamonds' | 'totalDiamonds' | 'checkinRate' | 'weekYes' | 'monthStreamingMinutes' | 'totalStreamingMinutes'
 
 function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return (
@@ -180,8 +180,20 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
                   累計ダイヤ
                   <SortIcon active={sortKey === 'totalDiamonds'} dir={sortDir} />
                 </th>
-                <th className="text-right px-4 py-3 text-gray-600 font-medium">今月配信時間</th>
-                <th className="text-right px-4 py-3 text-gray-600 font-medium">累計配信時間</th>
+                <th
+                  className="text-right px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-indigo-600"
+                  onClick={() => handleSort('monthStreamingMinutes')}
+                >
+                  今月配信時間
+                  <SortIcon active={sortKey === 'monthStreamingMinutes'} dir={sortDir} />
+                </th>
+                <th
+                  className="text-right px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-indigo-600"
+                  onClick={() => handleSort('totalStreamingMinutes')}
+                >
+                  累計配信時間
+                  <SortIcon active={sortKey === 'totalStreamingMinutes'} dir={sortDir} />
+                </th>
                 <th
                   className="text-right px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-indigo-600"
                   onClick={() => handleSort('checkinRate')}
