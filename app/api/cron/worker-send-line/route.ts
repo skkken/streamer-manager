@@ -4,6 +4,7 @@ import { getJstDateString } from '@/lib/jst'
 import { sendLineMessage, buildCheckinMessage, buildThanksMessage } from '@/lib/line'
 import type { AiType } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
+import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
 
 const BATCH_LIMIT = 50
 const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは再取得可能
@@ -28,6 +29,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const JOB_KEY = 'worker-send-line'
+  if (!(await isCronEnabled(JOB_KEY))) {
+    return NextResponse.json({ message: 'disabled', job: JOB_KEY })
+  }
+
   const supabase = createServerClient()
   const today = getJstDateString()
   const lockCutoff = new Date(Date.now() - LOCK_TIMEOUT_MINUTES * 60 * 1000).toISOString()
@@ -47,7 +53,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: fetchErr.message }, { status: 500 })
   }
   if (!jobs?.length) {
-    return NextResponse.json({ message: 'no jobs', processed: 0 })
+    const noJobsResult = { message: 'no jobs', processed: 0 }
+    await updateCronResult(JOB_KEY, noJobsResult).catch(() => {})
+    return NextResponse.json(noJobsResult)
   }
 
   const jobIds = jobs.map((j) => j.id)
@@ -178,13 +186,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  const responseBody = {
     message: 'done',
     total: jobs.length,
     sent,
     failed,
     skipped,
-  })
+  }
+  await updateCronResult(JOB_KEY, responseBody).catch(() => {})
+  return NextResponse.json(responseBody)
 }
 
 export const GET = POST

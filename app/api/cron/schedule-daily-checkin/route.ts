@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
+import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
 
 /**
  * POST /api/cron/schedule-daily-checkin
@@ -20,6 +21,11 @@ export async function POST(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const JOB_KEY = 'schedule-daily-checkin'
+  if (!(await isCronEnabled(JOB_KEY))) {
+    return NextResponse.json({ message: 'disabled', job: JOB_KEY })
   }
 
   const supabase = createServerClient()
@@ -84,13 +90,15 @@ export async function POST(req: NextRequest) {
     if (!jobErr) jobCreated++
   }
 
-  return NextResponse.json({
+  const responseBody = {
     message: 'scheduled',
     date,
     streamer_count: streamers.length,
     token_created: tokenCreated,
     job_created: jobCreated,
-  })
+  }
+  await updateCronResult(JOB_KEY, responseBody).catch(() => {})
+  return NextResponse.json(responseBody)
 }
 
 // Vercel Cron は GET も使う
