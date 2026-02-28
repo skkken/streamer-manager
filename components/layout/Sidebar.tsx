@@ -12,7 +12,6 @@ const navItems = [
   { label: 'LINEチャネル', href: '/admin/line-channels' },
   { label: '通知ジョブ', href: '/admin/notifications' },
   { label: 'メッセージ設定', href: '/admin/messages' },
-  { label: 'エラーログ', href: '/admin/errors' },
   { label: 'Cron設定', href: '/admin/cron' },
 ]
 
