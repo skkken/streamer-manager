@@ -3,8 +3,8 @@ import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 
 export async function GET(req: NextRequest) {
-  const authErr = await requireAuth()
-  if (authErr) return authErr
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
 
   const { searchParams } = req.nextUrl
   const limit = Math.min(Number(searchParams.get('limit') || '50'), 100)
@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const authErr = await requireAuth()
-  if (authErr) return authErr
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
 
   const body = await req.json()
   const { id, resolved } = body as { id: string; resolved: boolean }
