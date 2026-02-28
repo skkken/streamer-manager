@@ -18,11 +18,15 @@ function makeKey(index: number) {
 }
 
 const LEVEL_LABELS: Record<number, string> = {
-  0: 'レベル 0（全員 / デフォルト）',
-  1: 'レベル 1',
-  2: 'レベル 2',
-  3: 'レベル 3',
-  4: 'レベル 4',
+  0: '全員共通（デフォルト）',
+  1: 'Lv1',
+  2: 'Lv2',
+  3: 'Lv3',
+  4: 'Lv4',
+  5: 'Lv5',
+  6: 'Lv6',
+  7: 'Lv7',
+  8: 'G',
 }
 
 export default function EditTemplatePage() {
