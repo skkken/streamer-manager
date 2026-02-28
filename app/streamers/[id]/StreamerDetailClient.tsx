@@ -86,6 +86,7 @@ export default function StreamerDetailClient({
   stats,
   templateFields,
   earningsByDate,
+  channelName,
 }: {
   streamer: Streamer
   checks: SelfCheck[]
@@ -93,6 +94,7 @@ export default function StreamerDetailClient({
   stats: Stats | null
   templateFields: Record<string, TemplateField[]>
   earningsByDate: Record<string, { diamonds: number; streaming_minutes: number }>
+  channelName: string | null
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<'checks' | 'notes'>('checks')
@@ -245,7 +247,7 @@ export default function StreamerDetailClient({
                 <span className="font-medium">{levelLabel}</span>
               </InfoRow>
               <InfoRow label="事務所名">
-                {streamer.agency_name ?? <span className="text-gray-400 text-xs">未設定</span>}
+                {channelName ?? <span className="text-gray-400 text-xs">未設定</span>}
               </InfoRow>
               <InfoRow label="担当者">
                 {streamer.manager_name ?? <span className="text-gray-400 text-xs">未設定</span>}

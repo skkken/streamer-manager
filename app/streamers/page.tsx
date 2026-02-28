@@ -30,7 +30,7 @@ async function getData(): Promise<StreamerRow[]> {
     monday.setUTCDate(jstNow.getUTCDate() - (dayOfWeek - 1))
     const mondayStr = getJstDateString(monday)
 
-    const [streamersRes, earningsRes, checksRes, notesRes] = await Promise.all([
+    const [streamersRes, earningsRes, checksRes, notesRes, channelsRes] = await Promise.all([
       supabase.from('streamers').select('*').order('created_at', { ascending: false }),
       supabase.from('daily_earnings').select('streamer_id, date, diamonds, streaming_minutes'),
       supabase
@@ -42,9 +42,16 @@ async function getData(): Promise<StreamerRow[]> {
         .from('staff_notes')
         .select('streamer_id, status, date')
         .order('date', { ascending: false }),
+      supabase.from('line_channels').select('id, name'),
     ])
 
     const streamers: Streamer[] = streamersRes.data ?? []
+
+    // チャネル名マップ
+    const channelNameMap = new Map<string, string>()
+    for (const ch of channelsRes.data ?? []) {
+      channelNameMap.set(ch.id, ch.name)
+    }
 
     // ダイヤ・配信時間集計（累計 & 今月）
     const totalDiamondMap = new Map<string, number>()
@@ -91,6 +98,7 @@ async function getData(): Promise<StreamerRow[]> {
         checkinRate: cnt / weekDenominator,
         weekYes: weekCnt > 0 ? (weekYesSumMap.get(s.id) ?? 0) / weekCnt : null,
         latestNoteStatus: latestNoteStatusMap.get(s.id) ?? null,
+        channelName: s.line_channel_id ? channelNameMap.get(s.line_channel_id) ?? null : null,
       }
     })
   } catch {

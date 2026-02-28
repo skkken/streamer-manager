@@ -93,6 +93,17 @@ async function getData(id: string) {
       templateFields[t.id] = ((t.schema as TemplateSchema) ?? {}).fields ?? []
     }
 
+    // チャネル名を取得
+    let channelName: string | null = null
+    if (streamerRes.data?.line_channel_id) {
+      const { data: ch } = await supabase
+        .from('line_channels')
+        .select('name')
+        .eq('id', streamerRes.data.line_channel_id)
+        .single()
+      channelName = ch?.name ?? null
+    }
+
     return {
       streamer: streamerRes.data,
       checks: checksRes.data ?? [],
@@ -100,9 +111,10 @@ async function getData(id: string) {
       stats: computeStats(checksRes.data ?? [], totalDiamonds, earnings),
       templateFields,
       earningsByDate,
+      channelName,
     }
   } catch {
-    return { streamer: null, checks: [], notes: [], stats: null, templateFields: {}, earningsByDate: {} }
+    return { streamer: null, checks: [], notes: [], stats: null, templateFields: {}, earningsByDate: {}, channelName: null }
   }
 }
 
@@ -112,7 +124,7 @@ export default async function StreamerDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { streamer, checks, notes, stats, templateFields, earningsByDate } = await getData(id)
+  const { streamer, checks, notes, stats, templateFields, earningsByDate, channelName } = await getData(id)
 
   if (!streamer) {
     notFound()
@@ -120,7 +132,7 @@ export default async function StreamerDetailPage({
 
   return (
     <AdminLayout title="配信者詳細">
-      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} earningsByDate={earningsByDate} />
+      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} earningsByDate={earningsByDate} channelName={channelName} />
     </AdminLayout>
   )
 }

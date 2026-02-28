@@ -15,6 +15,7 @@ export type StreamerRow = Streamer & {
   checkinRate: number
   weekYes: number | null
   latestNoteStatus: StaffNoteStatus | null
+  channelName: string | null
 }
 
 function formatMinutes(m: number): string {
@@ -78,7 +79,7 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
   const agencies = useMemo(() => {
     const set = new Set<string>()
     for (const s of streamers) {
-      if (s.agency_name) set.add(s.agency_name)
+      if (s.channelName) set.add(s.channelName)
     }
     return Array.from(set).sort()
   }, [streamers])
@@ -105,8 +106,8 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
       agencyFilter === '__all__'
         ? streamers
         : agencyFilter === '__none__'
-        ? streamers.filter((s) => !s.agency_name)
-        : streamers.filter((s) => s.agency_name === agencyFilter)
+        ? streamers.filter((s) => !s.channelName)
+        : streamers.filter((s) => s.channelName === agencyFilter)
 
     if (managerFilter !== '__all__') {
       list =
@@ -223,7 +224,7 @@ export default function StreamersTable({ streamers }: { streamers: StreamerRow[]
                     {(() => { const lv = s.level_override ?? s.level_current ?? null; return lv === null ? '—' : lv === 8 ? 'G' : `Lv${lv}` })()}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
-                    {s.agency_name ?? <span className="text-gray-300">—</span>}
+                    {s.channelName ?? <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
                     <div className="flex flex-col gap-1">
