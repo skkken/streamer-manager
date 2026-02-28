@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const body = await req.json()
 
-  const { name, version, schema_json } = body
+  const { name, for_level, schema_json } = body
 
   if (!name || !schema_json) {
     return NextResponse.json({ error: 'name と schema_json は必須' }, { status: 400 })
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('self_check_templates')
-    .insert({ name, version: version ?? '1.0', schema })
+    .insert({ name, for_level: for_level ?? 0, schema })
     .select()
     .single()
 

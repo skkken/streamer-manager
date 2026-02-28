@@ -5,7 +5,7 @@ import Badge from '@/components/ui/Badge'
 import Card from '@/components/ui/Card'
 import { createServerClient } from '@/lib/supabase/server'
 import { SelfCheckTemplate } from '@/lib/types'
-import TemplateActivateButton from './TemplateActivateButton'
+import TemplateActions from './TemplateActions'
 
 async function getTemplates(): Promise<SelfCheckTemplate[]> {
   try {
@@ -39,7 +39,7 @@ export default async function TemplatesPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left px-6 py-3 text-gray-600 font-medium">テンプレ名</th>
-                <th className="text-left px-6 py-3 text-gray-600 font-medium">バージョン</th>
+                <th className="text-left px-6 py-3 text-gray-600 font-medium">対象レベル</th>
                 <th className="text-left px-6 py-3 text-gray-600 font-medium">フィールド数</th>
                 <th className="text-left px-6 py-3 text-gray-600 font-medium">状態</th>
                 <th className="text-left px-6 py-3 text-gray-600 font-medium">作成日</th>
@@ -50,7 +50,9 @@ export default async function TemplatesPage() {
               {templates.map((t) => (
                 <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-6 py-3 font-medium text-gray-900">{t.name}</td>
-                  <td className="px-6 py-3 text-gray-500">{t.version}</td>
+                  <td className="px-6 py-3 text-gray-500">
+                    {t.for_level === 0 ? 'Lv0（全員）' : `Lv${t.for_level}`}
+                  </td>
                   <td className="px-6 py-3 text-gray-500">
                     {(t.schema as { fields?: unknown[] })?.fields?.length ?? 0}
                   </td>
@@ -62,8 +64,8 @@ export default async function TemplatesPage() {
                   <td className="px-6 py-3 text-gray-500">
                     {new Date(t.created_at).toLocaleDateString('ja-JP')}
                   </td>
-                  <td className="px-6 py-3 text-right space-x-2">
-                    {!t.is_active && <TemplateActivateButton id={t.id} />}
+                  <td className="px-6 py-3">
+                    <TemplateActions id={t.id} name={t.name} isActive={t.is_active} />
                   </td>
                 </tr>
               ))}

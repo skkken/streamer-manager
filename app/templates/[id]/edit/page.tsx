@@ -3,8 +3,8 @@
 import AdminLayout from '@/components/layout/AdminLayout'
 import Button from '@/components/ui/Button'
 import Card, { CardBody } from '@/components/ui/Card'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 const MAX_FIELDS = 50
 
@@ -25,13 +25,40 @@ const LEVEL_LABELS: Record<number, string> = {
   4: 'レベル 4',
 }
 
-export default function NewTemplatePage() {
+export default function EditTemplatePage() {
   const router = useRouter()
+  const { id } = useParams<{ id: string }>()
+
   const [name, setName] = useState('')
   const [forLevel, setForLevel] = useState(0)
-  const [fields, setFields] = useState<FieldRow[]>([{ label: '', required: true }])
+  const [fields, setFields] = useState<FieldRow[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/templates/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error)
+          setLoading(false)
+          return
+        }
+        setName(data.name ?? '')
+        setForLevel(data.for_level ?? 0)
+        const rawFields: { label?: string; required?: boolean }[] =
+          data.schema?.fields ?? []
+        setFields(
+          rawFields.map((f) => ({ label: f.label ?? '', required: f.required ?? false }))
+        )
+        setLoading(false)
+      })
+      .catch(() => {
+        setError('テンプレートの読み込みに失敗しました')
+        setLoading(false)
+      })
+  }, [id])
 
   const addField = () => {
     if (fields.length >= MAX_FIELDS) return
@@ -75,24 +102,32 @@ export default function NewTemplatePage() {
 
     setSubmitting(true)
     try {
-      const res = await fetch('/api/templates', {
-        method: 'POST',
+      const res = await fetch(`/api/templates/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), for_level: forLevel, schema_json: JSON.stringify(schema) }),
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error ?? '作成に失敗しました')
+        throw new Error(data.error ?? '更新に失敗しました')
       }
       router.push('/templates')
     } catch (err) {
-      setError(err instanceof Error ? err.message : '作成に失敗しました')
+      setError(err instanceof Error ? err.message : '更新に失敗しました')
       setSubmitting(false)
     }
   }
 
+  if (loading) {
+    return (
+      <AdminLayout title="テンプレ 編集">
+        <p className="text-sm text-gray-500">読み込み中...</p>
+      </AdminLayout>
+    )
+  }
+
   return (
-    <AdminLayout title="テンプレ 新規作成">
+    <AdminLayout title="テンプレ 編集">
       <div className="max-w-2xl">
         <Card>
           <CardBody>
@@ -195,7 +230,7 @@ export default function NewTemplatePage() {
 
               <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? '作成中...' : '作成する'}
+                  {submitting ? '更新中...' : '更新する'}
                 </Button>
                 <Button
                   type="button"
