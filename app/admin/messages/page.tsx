@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import AdminLayout from '@/components/layout/AdminLayout'
 import { getMessageSettings } from '@/lib/messages'
 import MessagesClient from './MessagesClient'
