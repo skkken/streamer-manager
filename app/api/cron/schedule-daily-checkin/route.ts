@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     if (!tokenErr) tokenCreated++
 
     // --- line_jobs に daily_checkin キュー（冪等）---
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
     const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
 
     const { error: jobErr } = await supabase
