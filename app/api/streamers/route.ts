@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { createStreamerSchema, parseBody } from '@/lib/validations'
-import { captureApiError } from '@/lib/sentry'
+import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/streamers  — 一覧取得
 export async function GET(req: NextRequest) {

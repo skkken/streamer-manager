@@ -6,7 +6,7 @@ import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
 import { requireAuth } from '@/lib/auth-guard'
 import { sendReminderSchema, parseBody } from '@/lib/validations'
-import { captureApiError } from '@/lib/sentry'
+import { captureApiError } from '@/lib/error-logger'
 
 /**
  * POST /api/line/send-reminder

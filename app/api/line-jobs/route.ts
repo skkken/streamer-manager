@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { requireAuth } from '@/lib/auth-guard'
-import { captureApiError } from '@/lib/sentry'
+import { captureApiError } from '@/lib/error-logger'
 
 /**
  * GET /api/line-jobs?date=YYYY-MM-DD&status=queued

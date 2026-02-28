@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
 import { notifyToggleSchema, parseBody } from '@/lib/validations'
-import { captureApiError } from '@/lib/sentry'
+import { captureApiError } from '@/lib/error-logger'
 
 type Params = { params: Promise<{ id: string }> }
 

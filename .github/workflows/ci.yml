@@ -32,7 +32,3 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-          NEXT_PUBLIC_SENTRY_DSN: ""
-          SENTRY_ORG: ""
-          SENTRY_PROJECT: ""
-          SENTRY_AUTH_TOKEN: ""

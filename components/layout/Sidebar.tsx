@@ -11,6 +11,7 @@ const navItems = [
   { label: 'LINE登録待ち', href: '/admin/line-registrations' },
   { label: '通知ジョブ', href: '/admin/notifications' },
   { label: 'メッセージ設定', href: '/admin/messages' },
+  { label: 'エラーログ', href: '/admin/errors' },
 ]
 
 export default function Sidebar() {

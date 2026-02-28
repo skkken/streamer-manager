@@ -6,7 +6,7 @@ import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
 import { selfCheckSubmitSchema, parseBody } from '@/lib/validations'
-import { captureApiError } from '@/lib/sentry'
+import { captureApiError } from '@/lib/error-logger'
 
 /**
  * POST /api/self-check
