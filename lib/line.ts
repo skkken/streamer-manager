@@ -20,7 +20,7 @@ export interface LineMessage {
  */
 export async function sendLineMessage(
   lineUserId: string,
-  messages: (LineMessage | Record<string, unknown>)[],
+  messages: LineMessage[],
   channelAccessToken?: string
 ): Promise<{ ok: boolean; error?: string }> {
   const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
@@ -72,80 +72,6 @@ export async function replyLineMessage(
   })
 }
 
-/** LINE Reply API で任意のメッセージオブジェクト配列を送信 */
-export async function replyLineMessages(
-  replyToken: string,
-  messages: Record<string, unknown>[],
-  channelAccessToken?: string
-): Promise<void> {
-  const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
-  if (!token) return
-  const res = await fetch('https://api.line.me/v2/bot/message/reply', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ replyToken, messages }),
-  })
-  if (!res.ok) {
-    const body = await res.text()
-    console.error('[replyLineMessages] LINE API error:', res.status, body)
-  }
-}
-
-/** チェックインURL付き Flex Message を構築（配信終了・リマインダー共通） */
-export function buildCheckinFlexMessage(
-  bodyText: string,
-  checkinUrl: string,
-  footerText: string,
-  buttonLabel = '自己評価を入力する',
-): Record<string, unknown> {
-  return {
-    type: 'flex',
-    altText: bodyText,
-    contents: {
-      type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'text',
-            text: bodyText,
-            wrap: true,
-            size: 'sm',
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          {
-            type: 'button',
-            action: {
-              type: 'uri',
-              label: buttonLabel,
-              uri: checkinUrl,
-            },
-            style: 'primary',
-          },
-          {
-            type: 'text',
-            text: footerText,
-            size: 'xxs',
-            color: '#999999',
-            align: 'center',
-            wrap: true,
-          },
-        ],
-      },
-    },
-  }
-}
-
 /** LINE Profile API で display name を取得 */
 export async function getLineDisplayName(
   lineUserId: string,
@@ -165,10 +91,12 @@ export async function getLineDisplayName(
   }
 }
 
-/** 自己評価リンクのメッセージ（Flex Message） */
-export function buildCheckinMessage(name: string, url: string, dateLabel: string): Record<string, unknown> {
-  const bodyText = `【${dateLabel}の自己評価】\n${name}さん、お疲れさまです。\n${dateLabel}の自己評価の入力をお願いします。`
-  return buildCheckinFlexMessage(bodyText, url, '※URLは翌日昼まで有効です。')
+/** 自己評価リンクのメッセージ */
+export function buildCheckinMessage(name: string, url: string, dateLabel: string): LineMessage {
+  return {
+    type: 'text',
+    text: `【${dateLabel}の自己評価】\n${name}さん、お疲れさまです。\n以下のリンクから入力をお願いします。\n\n${url}`,
+  }
 }
 
 /** お礼メッセージ（5種AIタイプ対応）

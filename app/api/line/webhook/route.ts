@@ -4,8 +4,6 @@ import { createHmac } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
-import { buildCheckinFlexMessage } from '@/lib/line'
-
 /** LINE Reply API でメッセージを送信 */
 async function replyMessage(replyToken: string, text: string): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
@@ -20,20 +18,6 @@ async function replyMessage(replyToken: string, text: string): Promise<void> {
       replyToken,
       messages: [{ type: 'text', text }],
     }),
-  })
-}
-
-/** LINE Reply API で任意のメッセージを送信 */
-async function replyMessages(replyToken: string, messages: Record<string, unknown>[]): Promise<void> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
-  if (!token) return
-  await fetch('https://api.line.me/v2/bot/message/reply', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ replyToken, messages }),
   })
 }
 
@@ -131,15 +115,10 @@ export async function POST(req: NextRequest) {
 
           const [, mm, dd] = today.split('-')
           const dateLabel = `${Number(mm)}月${Number(dd)}日`
-          const template = messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。'
-          const bodyText = template
+          const replyText = (messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。')
             .replace('{date}', dateLabel)
-            .replace(/\n*\{url\}\n*/g, '')
-            .replace(/\n※.*$/, '')
-            .trim()
-          const footerText = '※URLは翌日昼まで有効です。'
-          const flexMsg = buildCheckinFlexMessage(bodyText, checkinUrl, footerText)
-          await replyMessages(replyToken, [flexMsg])
+            .replace('{url}', checkinUrl)
+          await replyMessage(replyToken, replyText)
         }
       }
       continue

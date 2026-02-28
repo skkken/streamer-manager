@@ -4,7 +4,7 @@ import { createHmac } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
-import { replyLineMessage, replyLineMessages, getLineDisplayName, buildCheckinFlexMessage } from '@/lib/line'
+import { replyLineMessage, getLineDisplayName } from '@/lib/line'
 import { getLineChannelByWebhookPath } from '@/lib/line-channels'
 
 type Params = { params: Promise<{ channelPath: string }> }
@@ -91,15 +91,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
           const [, mm, dd] = today.split('-')
           const dateLabel = `${Number(mm)}月${Number(dd)}日`
-          const template = messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。'
-          const bodyText = template
+          const replyText = (messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから{date}の自己評価を入力してください。\n\n{url}\n\n※URLは翌日昼まで有効です。')
             .replace('{date}', dateLabel)
-            .replace(/\n*\{url\}\n*/g, '')
-            .replace(/\n※.*$/, '')
-            .trim()
-          const footerText = '※URLは翌日昼まで有効です。'
-          const flexMsg = buildCheckinFlexMessage(bodyText, checkinUrl, footerText)
-          await replyLineMessages(replyToken, [flexMsg], token)
+            .replace('{url}', checkinUrl)
+          await replyLineMessage(replyToken, replyText, token)
         }
       }
       continue

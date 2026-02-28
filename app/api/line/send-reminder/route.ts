@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
-import { sendLineMessage, buildCheckinFlexMessage } from '@/lib/line'
+import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
 import { requireAuth } from '@/lib/auth-guard'
 import { sendReminderSchema, parseBody } from '@/lib/validations'
@@ -97,18 +97,13 @@ export async function POST(req: NextRequest) {
       // "2026-02-28" → "2月28日"
       const [, mm, dd] = targetDate.split('-')
       const dateLabel = `${Number(mm)}月${Number(dd)}日`
-      const template = messages.line_checkin_reminder
+      const text = messages.line_checkin_reminder
         .replace('{name}', streamer.display_name)
+        .replace('{url}', checkinUrl)
         .replace('{date}', dateLabel)
-      const bodyText = template
-        .replace(/\n*\{url\}\n*/g, '')
-        .replace(/\n※.*$/, '')
-        .trim()
-      const footerText = '※URLは翌日昼まで有効です。'
-      const flexMsg = buildCheckinFlexMessage(bodyText, checkinUrl, footerText)
 
       const result = await sendLineMessage(streamer.line_user_id, [
-        flexMsg,
+        { type: 'text', text },
       ], channelToken)
 
       if (result.ok) {
