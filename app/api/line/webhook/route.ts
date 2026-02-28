@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { createHmac } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
+import { generateToken, hashToken } from '@/lib/token'
+import { getJstDateString, getJstEndOfDay } from '@/lib/jst'
 
 /** LINE Reply API でメッセージを送信 */
 async function replyMessage(replyToken: string, text: string): Promise<void> {
@@ -72,12 +74,54 @@ export async function POST(req: NextRequest) {
 
     const replyToken = event.replyToken as string | undefined
 
-    // 既に配信者として登録済みならスキップ
+    // 既に配信者として登録済みか確認
     const { data: existingStreamer } = await supabase
       .from('streamers')
-      .select('id')
+      .select('id, display_name')
       .eq('line_user_id', lineUserId)
       .maybeSingle()
+
+    // --- 登録済み配信者: 「配信終了」コマンド処理 ---
+    if (existingStreamer && event.type === 'message') {
+      const msg = event.message as Record<string, unknown> | undefined
+      if (msg?.type === 'text') {
+        const text = (msg.text as string).trim()
+        const keyword = messages.line_stream_end_keyword ?? '配信終了'
+        if (text === keyword && replyToken) {
+          const today = getJstDateString()
+          const expiresAt = getJstEndOfDay(today).toISOString()
+          const rawToken = generateToken()
+          const tokenHash = hashToken(rawToken)
+
+          // トークン発行（既存があれば上書き）
+          await supabase
+            .from('checkin_tokens')
+            .upsert(
+              {
+                streamer_id: existingStreamer.id,
+                date: today,
+                token_hash: tokenHash,
+                expires_at: expiresAt,
+                used_at: null,
+              },
+              { onConflict: 'streamer_id,date' }
+            )
+
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL ??
+            (process.env.VERCEL_PROJECT_PRODUCTION_URL
+              ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+              : 'http://localhost:3000')
+          const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
+
+          const replyText = (messages.line_stream_end_reply ?? '配信お疲れさまでした！\n以下のリンクから本日の自己評価を入力してください。\n\n{url}\n\n※URLは本日中のみ有効です。')
+            .replace('{url}', checkinUrl)
+          await replyMessage(replyToken, replyText)
+        }
+      }
+      continue
+    }
+
     if (existingStreamer) continue
 
     // --- follow イベント: 新規登録フロー開始 ---

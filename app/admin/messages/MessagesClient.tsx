@@ -62,6 +62,15 @@ const SECTIONS = [
       { key: 'line_reg_done', label: '登録完了メッセージ' },
     ],
   },
+  {
+    title: '配信終了コマンド（LINE → セルフチェック誘導）',
+    note: '配信者がLINEでキーワードを送信すると、自己評価フォームのURLを返します。返信メッセージ内の {url} がチェックインURLに置換されます。',
+    fields: [
+      { key: 'line_stream_end_keyword', label: 'トリガーキーワード' },
+      { key: 'line_stream_end_reply', label: '返信メッセージ（{url} = チェックインURL）' },
+      { key: 'line_checkin_reminder', label: 'リマインドメッセージ（{name} = 名前, {url} = URL）' },
+    ],
+  },
 ]
 
 export default function MessagesClient({ initial }: { initial: MessageSettings }) {

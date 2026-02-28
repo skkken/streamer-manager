@@ -48,6 +48,12 @@ export const DEFAULT_MESSAGES: MessageSettings = {
     'ありがとうございます！\n最後に、所属事務所名を入力してください。\n（事務所に所属していない場合は「なし」と入力してください）',
   line_reg_done:
     '登録情報を受け付けました！\nスタッフが確認後、ご連絡いたします。しばらくお待ちください。',
+
+  line_stream_end_keyword: '配信終了',
+  line_stream_end_reply:
+    '配信お疲れさまでした！\n以下のリンクから本日の自己評価を入力してください。\n\n{url}\n\n※URLは本日中のみ有効です。',
+  line_checkin_reminder:
+    '【リマインド】\n{name}さん、本日の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは本日中のみ有効です。',
 }
 
 /** DBから設定を取得。失敗時はデフォルト値にフォールバック */
