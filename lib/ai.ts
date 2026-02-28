@@ -1,4 +1,6 @@
 import { AiType, TemplateField } from './types'
+import type { MessageSettings } from './messages'
+import { DEFAULT_MESSAGES } from './messages'
 
 /** ネガティブワードリスト */
 const NEGATIVE_WORDS = ['辞め', '無理', '辛い', 'しんどい', '向いてない', 'きつい']
@@ -29,9 +31,17 @@ export interface AiResult {
 }
 
 // ============================================================
-// コメント文面テンプレート
+// コメント文面テンプレート（フォールバック用）
 // ============================================================
 const COMMENTS: Record<AiType, { comment: string; next_action: Record<'pre' | 'live' | 'post', string> }> = {
+  VERY_GOOD: {
+    comment: '素晴らしいパフォーマンスです！今日はすべての項目で好成績でした。',
+    next_action: {
+      pre: "次回も『配信前の準備（告知・テーマ決め）』をこのまま継続しましょう。この調子です！",
+      live: "次回も『配信中の反応（コメント対応）』をこのまま継続しましょう。この調子です！",
+      post: "次回も『配信後の振り返り』をこのまま継続しましょう。この調子です！",
+    },
+  },
   GOOD: {
     comment: '良い流れで積み上がっています。今日も基本動作が安定しています。',
     next_action: {
@@ -48,7 +58,15 @@ const COMMENTS: Record<AiType, { comment: string; next_action: Record<'pre' | 'l
       post: "次回は『配信後の振り返り』を短くてもいいので1回やってみてください。",
     },
   },
-  SUPPORT: {
+  BAD: {
+    comment: '少し難しい日だったようです。無理せず一つずつ改善していきましょう。',
+    next_action: {
+      pre: "次回は『配信前の準備』を1点だけに絞って取り組んでみてください。",
+      live: "次回は『配信中の反応』を1点だけに絞って意識してみてください。",
+      post: "次回は『配信後の振り返り』をひと言だけでも残してみてください。",
+    },
+  },
+  VERY_BAD: {
     comment: '大変な日もあります。まずは休息と負荷調整を優先してください。',
     next_action: {
       pre: `明日は『配信前の準備』を"できる範囲で1つだけ"やれたら十分です。`,
@@ -63,12 +81,15 @@ const COMMENTS: Record<AiType, { comment: string; next_action: Record<'pre' | 'l
  * @param fields テンプレートフィールド定義
  * @param answers 回答 { key: boolean | string }
  * @param memo 自由記述メモ
+ * @param messages DBから取得したメッセージ設定（省略時はデフォルト値を使用）
  */
 export function generateAiResult(
   fields: TemplateField[],
   answers: Record<string, boolean | string>,
-  memo: string
+  memo: string,
+  messages?: MessageSettings
 ): AiResult {
+  const msg = messages ?? DEFAULT_MESSAGES
   const booleanFields = fields.filter((f) => f.type === 'boolean')
   const totalBooleanCount = booleanFields.length
 
@@ -96,14 +117,20 @@ export function generateAiResult(
     .map((f) => (answers[f.key] as string) ?? '')
   const ai_negative_detected = detectNegative([...textValues, memo])
 
-  // AI判定
+  // AI判定（5段階）
   let ai_type: AiType
-  if (ai_negative_detected || yesRate < 0.4) {
-    ai_type = 'SUPPORT'
-  } else if (yesRate >= 0.8) {
+  if (ai_negative_detected) {
+    ai_type = 'VERY_BAD'
+  } else if (yesRate >= 0.9) {
+    ai_type = 'VERY_GOOD'
+  } else if (yesRate >= 0.7) {
     ai_type = 'GOOD'
-  } else {
+  } else if (yesRate >= 0.5) {
     ai_type = 'NORMAL'
+  } else if (yesRate >= 0.3) {
+    ai_type = 'BAD'
+  } else {
+    ai_type = 'VERY_BAD'
   }
 
   // 弱点カテゴリ抽出（NO数が最大のprefix）
@@ -120,13 +147,10 @@ export function generateAiResult(
     weakArea = 'post'
   }
 
-  const template = COMMENTS[ai_type]
-  const ai_comment = template.comment
-  const ai_next_action = template.next_action[weakArea]
+  const ai_comment = msg[`done_comment_${ai_type.toLowerCase()}`] ?? COMMENTS[ai_type].comment
+  const ai_next_action =
+    msg[`done_action_${ai_type.toLowerCase()}_${weakArea}`] ??
+    COMMENTS[ai_type].next_action[weakArea]
 
   return { ai_type, ai_comment, ai_next_action, ai_negative_detected, overall_score }
 }
-
-/** SUPPORT時のネガ検出補足文 */
-export const NEGATIVE_SUPPLEMENT =
-  '必要であれば、スタッフに相談して大丈夫です。'
