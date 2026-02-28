@@ -10,6 +10,9 @@ export default function NewStreamerPage() {
   const router = useRouter()
   const [form, setForm] = useState({
     display_name: '',
+    agency_name: '',
+    manager_name: '',
+    tiktok_id: '',
     line_user_id: '',
     status: 'active',
     notify_enabled: true,
@@ -26,11 +29,20 @@ export default function NewStreamerPage() {
       const res = await fetch('/api/streamers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          agency_name: form.agency_name.trim() || null,
+          manager_name: form.manager_name.trim() || null,
+          tiktok_id: form.tiktok_id.trim() || null,
+        }),
       })
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? '作成に失敗しました')
+        let message = '作成に失敗しました'
+        const text = await res.text()
+        if (text) {
+          try { message = JSON.parse(text).error ?? message } catch (_e) {}
+        }
+        throw new Error(message)
       }
       router.push('/streamers')
     } catch (err) {
@@ -45,9 +57,10 @@ export default function NewStreamerPage() {
         <Card>
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-4">
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  表示名 <span className="text-red-500">*</span>
+                  名前 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -59,9 +72,77 @@ export default function NewStreamerPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ステータス
+                  </label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="active">アクティブ</option>
+                    <option value="paused">一時停止</option>
+                    <option value="graduated">卒業</option>
+                    <option value="dropped">離脱</option>
+                  </select>
+                </div>
+                <div className="flex items-end pb-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.notify_enabled}
+                      onChange={(e) => setForm({ ...form, notify_enabled: e.target.checked })}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    LINE通知を有効にする
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  LINE ユーザーID <span className="text-red-500">*</span>
+                  事務所名
+                </label>
+                <input
+                  type="text"
+                  value={form.agency_name}
+                  onChange={(e) => setForm({ ...form, agency_name: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="例: ○○プロダクション"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  担当者
+                </label>
+                <input
+                  type="text"
+                  value={form.manager_name}
+                  onChange={(e) => setForm({ ...form, manager_name: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="例: 山田太郎"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  TikTok ID
+                </label>
+                <input
+                  type="text"
+                  value={form.tiktok_id}
+                  onChange={(e) => setForm({ ...form, tiktok_id: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="@username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  LINE ID <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -69,37 +150,8 @@ export default function NewStreamerPage() {
                   value={form.line_user_id}
                   onChange={(e) => setForm({ ...form, line_user_id: e.target.value })}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="例: Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ステータス
-                </label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="active">アクティブ</option>
-                  <option value="paused">一時停止</option>
-                  <option value="graduated">卒業</option>
-                  <option value="dropped">離脱</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="notify_enabled"
-                  checked={form.notify_enabled}
-                  onChange={(e) => setForm({ ...form, notify_enabled: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <label htmlFor="notify_enabled" className="text-sm text-gray-700">
-                  LINE通知を有効にする
-                </label>
               </div>
 
               <div>
@@ -110,7 +162,7 @@ export default function NewStreamerPage() {
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   rows={3}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                   placeholder="任意のメモ"
                 />
               </div>

@@ -7,7 +7,9 @@ const navItems = [
   { label: '配信者一覧', href: '/streamers' },
   { label: 'テンプレ管理', href: '/templates' },
   { label: '運用ボード', href: '/board' },
+  { label: 'チェックインリンク', href: '/checkin-links' },
   { label: '通知ジョブ', href: '/admin/notifications' },
+  { label: 'メッセージ設定', href: '/admin/messages' },
 ]
 
 export default function Sidebar() {

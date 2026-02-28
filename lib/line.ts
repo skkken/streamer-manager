@@ -2,6 +2,9 @@
  * LINE Messaging API ユーティリティ
  * - pushMessage: 1対1メッセージ送信
  */
+import type { AiType } from './types'
+import type { MessageSettings } from './messages'
+import { DEFAULT_MESSAGES } from './messages'
 
 const LINE_API_URL = 'https://api.line.me/v2/bot/message/push'
 
@@ -54,12 +57,23 @@ export function buildCheckinMessage(name: string, url: string): LineMessage {
   }
 }
 
-/** お礼メッセージ（3パターン） */
-export function buildThanksMessage(aiType: 'GOOD' | 'NORMAL' | 'SUPPORT'): LineMessage {
-  const texts = {
-    GOOD: `【自己評価ありがとうございます】\n入力を確認しました。\n今日も良い積み上げです。お疲れさまでした。\n※返信は不要です。`,
-    NORMAL: `【自己評価ありがとうございます】\n入力を確認しました。\n無理のないペースで続けていきましょう。\n※返信は不要です。`,
-    SUPPORT: `【自己評価ありがとうございます】\n入力を確認しました。\n大変な日もあります。必要なら相談してください。\n※返信は不要です。`,
-  }
-  return { type: 'text', text: texts[aiType] }
+/** お礼メッセージ（5種AIタイプ対応）
+ * VERY_GOOD → good、BAD/VERY_BAD → support にマッピング
+ * @param messages DBから取得したメッセージ設定（省略時はデフォルト値を使用）
+ */
+export function buildThanksMessage(
+  aiType: AiType,
+  messages?: MessageSettings
+): LineMessage {
+  const msg = messages ?? DEFAULT_MESSAGES
+  const lineKey =
+    aiType === 'VERY_GOOD' || aiType === 'GOOD'
+      ? 'good'
+      : aiType === 'NORMAL'
+      ? 'normal'
+      : 'support' // BAD, VERY_BAD
+  const text =
+    msg[`line_thanks_${lineKey}`] ??
+    DEFAULT_MESSAGES[`line_thanks_${lineKey}`]
+  return { type: 'text', text }
 }

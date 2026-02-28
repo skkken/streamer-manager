@@ -1,16 +1,8 @@
 {
   "crons": [
-    {
-      "path": "/api/cron/schedule-daily-checkin",
-      "schedule": "5 15 * * *"
-    },
-    {
-      "path": "/api/cron/worker-send-line",
-      "schedule": "5-59 15 * * *"
-    },
-    {
-      "path": "/api/cron/worker-send-line",
-      "schedule": "0 16 * * *"
-    }
+    { "path": "/api/cron/daily?secret=YOUR_SECRET", "schedule": "5 15 * * *" },
+    { "path": "/api/cron/daily?secret=YOUR_SECRET", "schedule": "20 15 * * *" },
+    { "path": "/api/cron/daily?secret=YOUR_SECRET", "schedule": "35 15 * * *" },
+    { "path": "/api/cron/daily?secret=YOUR_SECRET", "schedule": "50 15 * * *" }
   ]
 }

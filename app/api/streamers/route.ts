@@ -26,10 +26,24 @@ export async function GET(req: NextRequest) {
 
 // POST /api/streamers  — 作成
 export async function POST(req: NextRequest) {
-  const supabase = createServerClient()
-  const body = await req.json()
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 })
+  }
 
-  const { display_name, line_user_id, status, notify_enabled, notes } = body
+  let supabase: ReturnType<typeof createServerClient>
+  try {
+    supabase = createServerClient()
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : 'Supabase 設定エラー' },
+      { status: 503 }
+    )
+  }
+
+  const { display_name, line_user_id, agency_name, tiktok_id, manager_name, status, notify_enabled, notes } = body
 
   if (!display_name || !line_user_id) {
     return NextResponse.json(
@@ -38,14 +52,27 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { data, error } = await supabase
-    .from('streamers')
-    .insert({ display_name, line_user_id, status, notify_enabled, notes })
-    .select()
-    .single()
+  try {
+    // .select('id') を付けて return=representation を強制し、空ボディ問題を回避
+    const { data, error } = await supabase
+      .from('streamers')
+      .insert({ display_name, line_user_id, agency_name: agency_name ?? null, tiktok_id: tiktok_id ?? null, manager_name: manager_name ?? null, status, notify_enabled, notes })
+      .select('id')
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      if (error.code === '23505' && error.message.includes('line_user_id')) {
+        return NextResponse.json(
+          { error: 'このLINE IDはすでに別の配信者に登録されています' },
+          { status: 409 }
+        )
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ success: true, id: data?.[0]?.id }, { status: 201 })
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : 'データベースエラー' },
+      { status: 500 }
+    )
   }
-  return NextResponse.json(data, { status: 201 })
 }

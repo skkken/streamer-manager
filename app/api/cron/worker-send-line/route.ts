@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { sendLineMessage, buildCheckinMessage, buildThanksMessage } from '@/lib/line'
+import type { AiType } from '@/lib/types'
+import { getMessageSettings } from '@/lib/messages'
 
 const BATCH_LIMIT = 50
 const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは再取得可能
@@ -30,6 +32,7 @@ export async function POST(req: NextRequest) {
   const today = getJstDateString()
   const lockCutoff = new Date(Date.now() - LOCK_TIMEOUT_MINUTES * 60 * 1000).toISOString()
   const nowIso = new Date().toISOString()
+  const messages = await getMessageSettings()
 
   // queued or 古いロックのジョブを取得
   const { data: jobs, error: fetchErr } = await supabase
@@ -122,8 +125,8 @@ export async function POST(req: NextRequest) {
         .eq('date', today)
         .single()
 
-      const aiType = (check?.ai_type as 'GOOD' | 'NORMAL' | 'SUPPORT') ?? 'NORMAL'
-      const msg = buildThanksMessage(aiType)
+      const aiType = (check?.ai_type as AiType) ?? 'NORMAL'
+      const msg = buildThanksMessage(aiType, messages)
       sendResult = await sendLineMessage(streamer.line_user_id, [msg])
     } else {
       sendResult = { ok: false, error: `unknown kind: ${job.kind}` }
