@@ -20,7 +20,6 @@ export async function GET() {
     'SUPABASE_SERVICE_ROLE_KEY',
     'LINE_CHANNEL_ACCESS_TOKEN',
     'LINE_CHANNEL_SECRET',
-    'CRON_SECRET',
   ]
   checks.env = requiredEnvs.every((key) => process.env[key]) ? 'ok' : 'error'
 

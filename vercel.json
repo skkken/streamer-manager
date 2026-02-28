@@ -1,9 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/cron/schedule-daily-checkin", "schedule": "5 20 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "10 20 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "20 20 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "35 20 * * *" },
-    { "path": "/api/cron/worker-send-line", "schedule": "50 20 * * *" }
-  ]
-}
+{}
