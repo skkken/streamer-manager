@@ -1,6 +1,7 @@
 /**
  * LINE Messaging API ユーティリティ
- * - pushMessage: 1対1メッセージ送信
+ * - pushMessage / replyMessage / getDisplayName
+ * - チャネルトークンは引数で渡す（フォールバック: 環境変数）
  */
 import type { AiType } from './types'
 import type { MessageSettings } from './messages'
@@ -15,15 +16,16 @@ export interface LineMessage {
 
 /**
  * LINE pushMessage
- * @returns { ok: boolean; error?: string }
+ * @param channelAccessToken チャネル固有のトークン（省略時は env var フォールバック）
  */
 export async function sendLineMessage(
   lineUserId: string,
-  messages: LineMessage[]
+  messages: LineMessage[],
+  channelAccessToken?: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
   if (!token) {
-    return { ok: false, error: 'LINE_CHANNEL_ACCESS_TOKEN is not set' }
+    return { ok: false, error: 'LINE channel access token is not available' }
   }
 
   try {
@@ -46,6 +48,46 @@ export async function sendLineMessage(
       ok: false,
       error: err instanceof Error ? err.message : 'unknown error',
     }
+  }
+}
+
+/** LINE Reply API でメッセージを送信 */
+export async function replyLineMessage(
+  replyToken: string,
+  text: string,
+  channelAccessToken?: string
+): Promise<void> {
+  const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
+  if (!token) return
+  await fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      replyToken,
+      messages: [{ type: 'text', text }],
+    }),
+  })
+}
+
+/** LINE Profile API で display name を取得 */
+export async function getLineDisplayName(
+  lineUserId: string,
+  channelAccessToken?: string
+): Promise<string | null> {
+  const token = channelAccessToken ?? process.env.LINE_CHANNEL_ACCESS_TOKEN
+  if (!token) return null
+  try {
+    const res = await fetch(`https://api.line.me/v2/bot/profile/${lineUserId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return (data.displayName as string) ?? null
+  } catch {
+    return null
   }
 }
 

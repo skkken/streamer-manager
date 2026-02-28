@@ -23,6 +23,7 @@ export interface Streamer {
   tiktok_id: string | null
   agency_name: string | null
   manager_name: string | null
+  line_channel_id: string | null
   notify_enabled: boolean
   notes: string | null
   created_at: string
@@ -97,6 +98,19 @@ export interface LineJob {
   attempts: number
   last_error: string | null
   locked_at: string | null
+  line_channel_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LineChannel {
+  id: string
+  name: string
+  channel_id: string
+  channel_secret: string
+  channel_access_token: string
+  webhook_path: string
+  is_active: boolean
   created_at: string
   updated_at: string
 }
