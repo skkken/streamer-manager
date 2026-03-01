@@ -1,4 +1,18 @@
 // ============================================================
+// User / Permission types
+// ============================================================
+
+export type UserRole = 'admin' | 'staff'
+
+export interface UserWithPermissions {
+  id: string
+  email: string
+  role: UserRole
+  channels: { id: string; name: string }[]
+  created_at: string
+}
+
+// ============================================================
 // Domain Types
 // ============================================================
 

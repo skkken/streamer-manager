@@ -164,6 +164,22 @@ export const registerLineUserSchema = z.object({
 })
 
 // ============================================================
+// ユーザー管理
+// ============================================================
+
+export const createUserSchema = z.object({
+  email: z.string().email('有効なメールアドレスを入力してください').max(200),
+  password: z.string().min(8, 'パスワードは8文字以上で入力してください').max(100),
+  role: z.enum(['admin', 'staff']).default('staff'),
+  channel_ids: z.array(z.string().uuid()).optional().default([]),
+})
+
+export const updateUserSchema = z.object({
+  role: z.enum(['admin', 'staff']).optional(),
+  channel_ids: z.array(z.string().uuid()).optional(),
+})
+
+// ============================================================
 // ヘルパー
 // ============================================================
 
