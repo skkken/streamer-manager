@@ -39,7 +39,8 @@ function checkApiRateLimit(
 
   const ip = getClientIp(request)
   const isPublic = PUBLIC_API_PATHS.some((p) => pathname.startsWith(p))
-  const limit = isPublic ? PUBLIC_LIMIT : DEFAULT_LIMIT
+  const isUnknownIp = ip === 'unknown'
+  const limit = isUnknownIp ? 5 : isPublic ? PUBLIC_LIMIT : DEFAULT_LIMIT
   const key = `${ip}:${isPublic ? 'public' : 'api'}`
 
   const result = rateLimit(key, limit, WINDOW_MS)
