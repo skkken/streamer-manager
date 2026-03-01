@@ -75,7 +75,10 @@ export async function POST(req: Request) {
     // 招待メール送信（ユーザー作成 + メール送信を一括で行う）
     const { data: userData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
-      { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?type=invite` }
+      {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        data: { needs_password_setup: true },
+      }
     )
 
     if (inviteError) {

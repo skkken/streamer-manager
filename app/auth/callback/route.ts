@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   // PKCE フロー（@supabase/ssr v0.4+ のデフォルト）
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
       redirectUrl.pathname = '/login'
@@ -21,8 +21,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // redirectTo に ?type=invite を含めているため判定可能
-    if (type === 'invite') {
+    // 招待ユーザーはメタデータで判定（クエリパラメータは保持されない場合がある）
+    const needsPassword =
+      type === 'invite' ||
+      data.user?.user_metadata?.needs_password_setup === true
+
+    if (needsPassword) {
       redirectUrl.pathname = '/auth/set-password'
       redirectUrl.search = ''
       return NextResponse.redirect(redirectUrl)

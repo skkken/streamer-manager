@@ -27,7 +27,10 @@ export default function SetPasswordForm() {
     setSubmitting(true)
     try {
       const supabase = createAuthBrowserClient()
-      const { error: updateError } = await supabase.auth.updateUser({ password })
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+        data: { needs_password_setup: false },
+      })
 
       if (updateError) {
         setError('パスワードの設定に失敗しました')
