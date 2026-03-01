@@ -1,8 +1,6 @@
 export const revalidate = 30
 
 import AdminLayout from '@/components/layout/AdminLayout'
-import Link from 'next/link'
-import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { createServerClient } from '@/lib/supabase/server'
 import { Streamer, StaffNoteStatus } from '@/lib/types'
@@ -117,20 +115,14 @@ export default async function StreamersPage() {
 
   return (
     <AdminLayout title="配信者一覧">
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4">
         <p className="text-sm text-gray-500">{streamers.length} 件</p>
-        <Link href="/streamers/new">
-          <Button size="sm">+ 新規作成</Button>
-        </Link>
       </div>
 
       {streamers.length === 0 ? (
         <Card>
           <div className="px-6 py-12 text-center">
             <p className="text-gray-400 text-sm">まだ配信者が登録されていません</p>
-            <Link href="/streamers/new">
-              <Button size="sm" className="mt-4">+ 最初の配信者を追加</Button>
-            </Link>
           </div>
         </Card>
       ) : (
