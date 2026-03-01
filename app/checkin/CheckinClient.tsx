@@ -6,8 +6,6 @@ import Button from '@/components/ui/Button'
 import { TemplateField, SelfCheckTemplate } from '@/lib/types'
 
 type LoadedData = {
-  streamer_id: string
-  streamer_name: string
   date: string
   template: SelfCheckTemplate
   already_submitted: boolean
@@ -61,8 +59,6 @@ export default function CheckinClient() {
           return
         }
         setLoaded({
-          streamer_id: data.streamer_id,
-          streamer_name: '',
           date: data.date,
           template: data.template,
           already_submitted: false,
@@ -190,7 +186,6 @@ export default function CheckinClient() {
           <div className="bg-indigo-600 px-6 py-5">
             <h1 className="text-white text-lg font-bold">本日の自己評価</h1>
             <p className="text-indigo-200 text-sm mt-0.5">
-              {loaded?.streamer_name && `${loaded.streamer_name} ・ `}
               {loaded?.date}
             </p>
           </div>
