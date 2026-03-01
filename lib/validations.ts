@@ -175,6 +175,12 @@ export const createUserSchema = z.object({
   channel_ids: z.array(z.string().uuid()).optional().default([]),
 })
 
+export const inviteUserSchema = z.object({
+  email: z.string().email('有効なメールアドレスを入力してください').max(200),
+  role: z.enum(['admin', 'staff']).default('staff'),
+  channel_ids: z.array(z.string().uuid()).optional().default([]),
+})
+
 export const updateUserSchema = z.object({
   role: z.enum(['admin', 'staff']).optional(),
   channel_ids: z.array(z.string().uuid()).optional(),

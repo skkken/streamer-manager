@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAdminAuth } from '@/lib/auth-guard'
-import { createUserSchema, parseRequest } from '@/lib/validations'
+import { inviteUserSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/admin/users — ユーザー一覧
@@ -59,32 +59,31 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/users — ユーザー作成
+// POST /api/admin/users — ユーザー招待
 export async function POST(req: Request) {
   const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
-  const parsed = await parseRequest(createUserSchema, req)
+  const parsed = await parseRequest(inviteUserSchema, req)
   if (!parsed.success) return parsed.error
 
-  const { email, password, role, channel_ids } = parsed.data
+  const { email, role, channel_ids } = parsed.data
 
   try {
     const supabase = createServerClient()
 
-    // ユーザー作成
-    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+    // 招待メール送信（ユーザー作成 + メール送信を一括で行う）
+    const { data: userData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
-      password,
-      email_confirm: true,
-    })
+      { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` }
+    )
 
-    if (createError) {
-      if (createError.message?.includes('already been registered')) {
+    if (inviteError) {
+      if (inviteError.message?.includes('already been registered')) {
         return NextResponse.json({ error: 'このメールアドレスは既に登録されています' }, { status: 409 })
       }
-      captureApiError(createError, '/api/admin/users', 'POST')
-      return NextResponse.json({ error: 'ユーザーの作成に失敗しました' }, { status: 500 })
+      captureApiError(inviteError, '/api/admin/users', 'POST')
+      return NextResponse.json({ error: '招待メールの送信に失敗しました' }, { status: 500 })
     }
 
     const userId = userData.user.id

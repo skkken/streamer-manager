@@ -84,6 +84,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // 認証コールバック・パスワード設定ページはスキップ
+  if (pathname.startsWith('/auth/')) {
+    return supabaseResponse
+  }
+
   if (pathname === '/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/streamers'

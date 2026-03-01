@@ -17,14 +17,12 @@ type UserItem = {
 
 type FormData = {
   email: string
-  password: string
   role: 'admin' | 'staff'
   channel_ids: string[]
 }
 
 const emptyForm: FormData = {
   email: '',
-  password: '',
   role: 'staff',
   channel_ids: [],
 }
@@ -55,7 +53,6 @@ export default function UsersClient({
     setEditId(u.id)
     setForm({
       email: u.email,
-      password: '',
       role: u.role as 'admin' | 'staff',
       channel_ids: u.channels.map(c => c.id),
     })
@@ -78,7 +75,6 @@ export default function UsersClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: form.email,
-            password: form.password,
             role: form.role,
             channel_ids: form.role === 'staff' ? form.channel_ids : [],
           }),
@@ -141,7 +137,7 @@ export default function UsersClient({
       <Card>
         <CardBody>
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            {mode === 'create' ? '新規ユーザー作成' : 'ユーザー編集'}
+            {mode === 'create' ? 'ユーザー招待' : 'ユーザー編集'}
           </h2>
           <div className="space-y-4 max-w-lg">
             <div>
@@ -159,18 +155,9 @@ export default function UsersClient({
             </div>
 
             {mode === 'create' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  パスワード <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="8文字以上"
-                />
-              </div>
+              <p className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+                招待メールが送信されます。受信者がリンクからパスワードを設定します。
+              </p>
             )}
 
             <div>
@@ -221,7 +208,7 @@ export default function UsersClient({
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? '保存中...' : mode === 'create' ? '作成' : '更新'}
+                {submitting ? '送信中...' : mode === 'create' ? '招待メールを送信' : '更新'}
               </Button>
               <Button variant="secondary" onClick={handleCancel} disabled={submitting}>
                 キャンセル
@@ -237,7 +224,7 @@ export default function UsersClient({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={handleCreate}>新規ユーザー追加</Button>
+        <Button onClick={handleCreate}>ユーザーを招待</Button>
       </div>
 
       {users.length === 0 ? (
