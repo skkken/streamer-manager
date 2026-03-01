@@ -156,23 +156,25 @@ export default function UsersClient({
 
             {mode === 'create' && (
               <p className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded px-3 py-2">
-                招待メールが送信されます。受信者がリンクからパスワードを設定します。
+                招待メールが送信されます。受信者はメール内のリンクからパスワードを設定し、ログインできるようになります。
               </p>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ロール
-              </label>
-              <select
-                value={form.role}
-                onChange={e => setForm({ ...form, role: e.target.value as 'admin' | 'staff' })}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="staff">staff（チャネル制限あり）</option>
-                <option value="admin">admin（全チャネル閲覧可）</option>
-              </select>
-            </div>
+            {mode === 'edit' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ロール
+                </label>
+                <select
+                  value={form.role}
+                  onChange={e => setForm({ ...form, role: e.target.value as 'admin' | 'staff' })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="staff">staff（チャネル制限あり）</option>
+                  <option value="admin">admin（全チャネル閲覧可）</option>
+                </select>
+              </div>
+            )}
 
             {form.role === 'staff' && (
               <div>
