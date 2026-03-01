@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { createServerClient } from './supabase/server'
 
 export type MessageSettings = Record<string, string>
@@ -56,17 +57,21 @@ export const DEFAULT_MESSAGES: MessageSettings = {
     '【リマインド】\n{name}さん、{date}の自己評価がまだ入力されていません。\n以下のリンクから入力をお願いします。\n\n{url}\n\n※URLは翌日昼まで有効です。',
 }
 
-/** DBから設定を取得。失敗時はデフォルト値にフォールバック */
-export async function getMessageSettings(): Promise<MessageSettings> {
-  try {
-    const supabase = createServerClient()
-    const { data } = await supabase.from('message_settings').select('key, value')
-    const result = { ...DEFAULT_MESSAGES }
-    for (const row of data ?? []) {
-      result[row.key] = row.value
+/** DBから設定を取得。失敗時はデフォルト値にフォールバック（5分キャッシュ） */
+export const getMessageSettings = unstable_cache(
+  async (): Promise<MessageSettings> => {
+    try {
+      const supabase = createServerClient()
+      const { data } = await supabase.from('message_settings').select('key, value')
+      const result = { ...DEFAULT_MESSAGES }
+      for (const row of data ?? []) {
+        result[row.key] = row.value
+      }
+      return result
+    } catch {
+      return { ...DEFAULT_MESSAGES }
     }
-    return result
-  } catch {
-    return { ...DEFAULT_MESSAGES }
-  }
-}
+  },
+  ['message-settings'],
+  { revalidate: 300 }
+)
