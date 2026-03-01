@@ -2,10 +2,11 @@ export const dynamic = 'force-dynamic'
 
 import AdminLayout from '@/components/layout/AdminLayout'
 import { createServerClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import StreamerDetailClient from './StreamerDetailClient'
 import { SelfCheck, TemplateField, TemplateSchema } from '@/lib/types'
 import { getJstDateString, getJstNow } from '@/lib/jst'
+import { getPagePermissions } from '@/lib/auth-guard'
 
 function yesRatio(answers: Record<string, boolean | string>): number {
   const vals = Object.values(answers).filter((v) => typeof v === 'boolean')
@@ -122,10 +123,16 @@ export default async function StreamerDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const { channelIds } = await getPagePermissions()
   const { streamer, checks, notes, stats, templateFields, earningsByDate, channelName } = await getData(id)
 
   if (!streamer) {
     notFound()
+  }
+
+  // チャネル権限チェック: staff が権限外の配信者にアクセスした場合はリダイレクト
+  if (channelIds !== null && streamer.line_channel_id && !channelIds.includes(streamer.line_channel_id)) {
+    redirect('/streamers')
   }
 
   return (

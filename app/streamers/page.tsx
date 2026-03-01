@@ -8,6 +8,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { Streamer, StaffNoteStatus } from '@/lib/types'
 import StreamersTable, { StreamerRow } from './StreamersTable'
 import { getJstDateString, getJstNow } from '@/lib/jst'
+import { getPagePermissions } from '@/lib/auth-guard'
 
 
 
@@ -17,7 +18,7 @@ function yesRatio(answers: Record<string, boolean | string>): number {
   return vals.filter((v) => v === true).length / vals.length
 }
 
-async function getData(): Promise<StreamerRow[]> {
+async function getData(channelIds: string[] | null): Promise<StreamerRow[]> {
   try {
     const supabase = createServerClient()
 
@@ -34,8 +35,14 @@ async function getData(): Promise<StreamerRow[]> {
 
     const monthStart = monthKey + '-01'
 
+    let streamersQuery = supabase.from('streamers').select('*').order('created_at', { ascending: false })
+    if (channelIds !== null) {
+      if (channelIds.length === 0) return []
+      streamersQuery = streamersQuery.in('line_channel_id', channelIds)
+    }
+
     const [streamersRes, earningsSummaryRes, checksRes, notesRes, channelsRes] = await Promise.all([
-      supabase.from('streamers').select('*').order('created_at', { ascending: false }),
+      streamersQuery,
       supabase.rpc('get_earnings_summary', { month_start: monthStart }),
       supabase
         .from('self_checks')
@@ -105,7 +112,8 @@ async function getData(): Promise<StreamerRow[]> {
 }
 
 export default async function StreamersPage() {
-  const streamers = await getData()
+  const { channelIds } = await getPagePermissions()
+  const streamers = await getData(channelIds)
 
   return (
     <AdminLayout title="配信者一覧">

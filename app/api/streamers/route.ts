@@ -1,22 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAuth, getUserChannelIds } from '@/lib/auth-guard'
 import { createStreamerSchema, parseBody } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/streamers  — 一覧取得
 export async function GET(req: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const authResult = await requireAuth()
+  if (authResult.errorResponse) return authResult.errorResponse
 
   const supabase = createServerClient()
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
 
+  // チャネル権限フィルタ
+  const channelIds = await getUserChannelIds(authResult.user!.id)
+
   let query = supabase
     .from('streamers')
     .select('*')
     .order('created_at', { ascending: false })
+
+  if (channelIds !== null) {
+    if (channelIds.length === 0) {
+      return NextResponse.json([])
+    }
+    query = query.in('line_channel_id', channelIds)
+  }
 
   if (status) {
     query = query.eq('status', status)
