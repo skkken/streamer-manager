@@ -394,18 +394,23 @@ export default function StreamerDetailClient({
                             className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer select-none"
                             onClick={() => setExpandedCheckId(isExpanded ? null : c.id)}
                           >
-                            <td className="px-4 py-3 text-gray-700">{c.date}</td>
                             <td className="px-4 py-3 text-gray-700">
-                              {earning ? formatMinutes(earning.streaming_minutes) : '—'}
+                              {c.date}
+                              {c.is_day_off && (
+                                <> <Badge variant="yellow">休み</Badge></>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                              {earning ? earning.diamonds.toLocaleString() : '—'}
+                              {c.is_day_off ? '—' : earning ? formatMinutes(earning.streaming_minutes) : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">
+                              {c.is_day_off ? '—' : earning ? earning.diamonds.toLocaleString() : '—'}
                             </td>
                             <td className="px-4 py-3 font-medium">
-                              {c.overall_score ?? '—'}
+                              {c.is_day_off ? '—' : c.overall_score ?? '—'}
                             </td>
                             <td className="px-4 py-3">
-                              {c.ai_type && (
+                              {!c.is_day_off && c.ai_type && (
                                 <Badge
                                   variant={
                                     c.ai_type === 'VERY_GOOD' || c.ai_type === 'GOOD'
@@ -420,7 +425,7 @@ export default function StreamerDetailClient({
                               )}
                             </td>
                             <td className="px-4 py-3">
-                              {c.ai_negative_detected && (
+                              {!c.is_day_off && c.ai_negative_detected && (
                                 <Badge variant="red">検出</Badge>
                               )}
                             </td>

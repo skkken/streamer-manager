@@ -75,8 +75,9 @@ export const selfCheckSubmitSchema = z.object({
   token: z.string().min(1, 'token は必須'),
   answers: z.record(z.string(), z.union([z.boolean(), z.string()])).optional().default({}),
   memo: z.string().max(5000).nullable().optional(),
-  diamonds: z.number().finite().min(0, 'diamonds は 0 以上の数値が必須です').max(100_000_000),
+  diamonds: z.number().finite().min(0, 'diamonds は 0 以上の数値が必須です').max(100_000_000).optional().default(0),
   streaming_minutes: z.number().min(0).max(1440).optional().default(0),
+  is_day_off: z.boolean().optional().default(false),
 })
 
 export const checkinVerifySchema = z.object({

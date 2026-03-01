@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   const parsed = parseBody(selfCheckSubmitSchema, body)
   if (!parsed.success) return parsed.error
 
-  const { token, answers, memo, diamonds, streaming_minutes: streamingMinutesNum } = parsed.data
+  const { token, answers, memo, diamonds, streaming_minutes: streamingMinutesNum, is_day_off: isDayOff } = parsed.data
 
   const tokenHash = hashToken(token)
   const now = new Date().toISOString()
@@ -102,13 +102,15 @@ export async function POST(req: NextRequest) {
   }
 
   const fields: TemplateField[] = template.schema?.fields ?? []
-  const messages = await getMessageSettings()
-  const aiResult = generateAiResult(
-    fields,
-    answers,
-    memo ?? '',
-    messages
-  )
+
+  // 休みの場合はAI判定をスキップ
+  let aiResult: { ai_type: string | null; ai_comment: string | null; ai_next_action: string | null; ai_negative_detected: boolean; overall_score: number | null }
+  if (isDayOff) {
+    aiResult = { ai_type: null, ai_comment: null, ai_next_action: null, ai_negative_detected: false, overall_score: null }
+  } else {
+    const messages = await getMessageSettings()
+    aiResult = generateAiResult(fields, answers, memo ?? '', messages)
+  }
 
   // ---- 5. self_checks upsert ----
   const { error: checkError } = await supabase
@@ -125,6 +127,7 @@ export async function POST(req: NextRequest) {
         ai_comment: aiResult.ai_comment,
         ai_next_action: aiResult.ai_next_action,
         ai_negative_detected: aiResult.ai_negative_detected,
+        is_day_off: isDayOff,
       },
       { onConflict: 'streamer_id,date', ignoreDuplicates: false }
     )

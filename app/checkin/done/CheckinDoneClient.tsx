@@ -43,11 +43,36 @@ export default function CheckinDoneClient({
   footer: string
 }) {
   const params = useSearchParams()
+  const isDayOff = params.get('dayoff') === '1'
   const aiType = (params.get('type') ?? 'NORMAL') as AiType
   const comment = params.get('comment') ?? ''
   const action = params.get('action') ?? ''
   const negDetected = params.get('neg') === '1'
   const score = params.get('score') ?? null
+
+  if (isDayOff) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-amber-500 px-6 py-6 text-center">
+              <div className="text-4xl mb-2">✓</div>
+              <h1 className="text-white text-xl font-bold">休み登録完了</h1>
+              <p className="text-white/80 text-sm mt-1">本日の休みを登録しました</p>
+            </div>
+            <div className="px-6 py-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-4 text-center">
+                <p className="text-sm text-gray-800 leading-relaxed">
+                  ゆっくり休んで、また次回の配信に備えましょう。
+                </p>
+              </div>
+              <p className="text-xs text-gray-400 text-center pt-1">{footer}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">

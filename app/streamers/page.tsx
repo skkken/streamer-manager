@@ -44,7 +44,7 @@ async function getData(channelIds: string[] | null): Promise<StreamerRow[]> {
       supabase.rpc('get_earnings_summary', { month_start: monthStart }),
       supabase
         .from('self_checks')
-        .select('streamer_id, date, answers')
+        .select('streamer_id, date, answers, is_day_off')
         .gte('date', mondayStr)
         .lte('date', todayStr),
       supabase
@@ -77,11 +77,16 @@ async function getData(channelIds: string[] | null): Promise<StreamerRow[]> {
       }
     }
 
-    // チェックイン回答率・今週YES割合集計
+    // チェックイン回答率・今週YES割合集計（休みは除外）
     const weekCheckinCountMap = new Map<string, number>()
+    const weekDayOffCountMap = new Map<string, number>()
     const weekYesSumMap = new Map<string, number>()
     const weekYesCountMap = new Map<string, number>()
     for (const c of checksRes.data ?? []) {
+      if ((c as Record<string, unknown>).is_day_off) {
+        weekDayOffCountMap.set(c.streamer_id, (weekDayOffCountMap.get(c.streamer_id) ?? 0) + 1)
+        continue
+      }
       weekCheckinCountMap.set(c.streamer_id, (weekCheckinCountMap.get(c.streamer_id) ?? 0) + 1)
       const ratio = yesRatio(c.answers as Record<string, boolean | string>)
       weekYesSumMap.set(c.streamer_id, (weekYesSumMap.get(c.streamer_id) ?? 0) + ratio)
@@ -90,6 +95,8 @@ async function getData(channelIds: string[] | null): Promise<StreamerRow[]> {
 
     return streamers.map((s) => {
       const cnt = weekCheckinCountMap.get(s.id) ?? 0
+      const dayOffCnt = weekDayOffCountMap.get(s.id) ?? 0
+      const adjustedDenom = weekDenominator - dayOffCnt
       const weekCnt = weekYesCountMap.get(s.id) ?? 0
       const earn = earningsMap.get(s.id)
       return {
@@ -98,7 +105,7 @@ async function getData(channelIds: string[] | null): Promise<StreamerRow[]> {
         monthDiamonds: earn?.month_diamonds ?? 0,
         totalStreamingMinutes: earn?.total_streaming_minutes ?? 0,
         monthStreamingMinutes: earn?.month_streaming_minutes ?? 0,
-        checkinRate: cnt / weekDenominator,
+        checkinRate: adjustedDenom > 0 ? cnt / adjustedDenom : 0,
         weekYes: weekCnt > 0 ? (weekYesSumMap.get(s.id) ?? 0) / weekCnt : null,
         latestNoteStatus: latestNoteStatusMap.get(s.id) ?? null,
         channelName: s.line_channel_id ? channelNameMap.get(s.line_channel_id) ?? null : null,

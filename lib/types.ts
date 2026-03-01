@@ -78,6 +78,7 @@ export interface SelfCheck {
   ai_comment: string | null
   ai_next_action: string | null
   ai_negative_detected: boolean | null
+  is_day_off: boolean
   created_at: string
 }
 

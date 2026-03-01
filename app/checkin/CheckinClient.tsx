@@ -26,6 +26,7 @@ export default function CheckinClient() {
 
   const [status, setStatus] = useState<PageStatus>('loading')
   const [loaded, setLoaded] = useState<LoadedData | null>(null)
+  const [isDayOff, setIsDayOff] = useState(false)
   const [streamingMinutes, setStreamingMinutes] = useState<number | ''>('')
   const [answers, setAnswers] = useState<Record<string, boolean | string>>({})
   const [memo, setMemo] = useState('')
@@ -80,34 +81,36 @@ export default function CheckinClient() {
     e.preventDefault()
     setErrorMsg('')
 
-    // requiredバリデーション
-    for (const field of fields) {
-      if (
-        field.required &&
-        field.type === 'boolean' &&
-        answers[field.key] === undefined
-      ) {
-        setErrorMsg(`「${field.label}」を選択してください`)
+    if (!isDayOff) {
+      // requiredバリデーション（休みでない場合のみ）
+      for (const field of fields) {
+        if (
+          field.required &&
+          field.type === 'boolean' &&
+          answers[field.key] === undefined
+        ) {
+          setErrorMsg(`「${field.label}」を選択してください`)
+          return
+        }
+        if (
+          field.required &&
+          field.type === 'text' &&
+          !String(answers[field.key] ?? '').trim()
+        ) {
+          setErrorMsg(`「${field.label}」を入力してください`)
+          return
+        }
+      }
+
+      if (streamingMinutes === '') {
+        setErrorMsg('配信時間を選択してください')
         return
       }
-      if (
-        field.required &&
-        field.type === 'text' &&
-        !String(answers[field.key] ?? '').trim()
-      ) {
-        setErrorMsg(`「${field.label}」を入力してください`)
+
+      if (diamonds === '' || Number(diamonds) < 0) {
+        setErrorMsg('当日のダイヤ数を0以上で入力してください')
         return
       }
-    }
-
-    if (streamingMinutes === '') {
-      setErrorMsg('配信時間を選択してください')
-      return
-    }
-
-    if (diamonds === '' || Number(diamonds) < 0) {
-      setErrorMsg('当日のダイヤ数を0以上で入力してください')
-      return
     }
 
     setStatus('submitting')
@@ -116,7 +119,11 @@ export default function CheckinClient() {
       const res = await fetch('/api/self-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, answers, memo, diamonds: Number(diamonds), streaming_minutes: Number(streamingMinutes) }),
+        body: JSON.stringify(
+          isDayOff
+            ? { token, answers: {}, memo: '', diamonds: 0, streaming_minutes: 0, is_day_off: true }
+            : { token, answers, memo, diamonds: Number(diamonds), streaming_minutes: Number(streamingMinutes), is_day_off: false }
+        ),
       })
 
       const data = await res.json()
@@ -129,6 +136,7 @@ export default function CheckinClient() {
         action: data.ai_next_action ?? '',
         neg: data.ai_negative_detected ? '1' : '0',
         score: String(data.overall_score ?? 0),
+        ...(isDayOff ? { dayoff: '1' } : {}),
       })
       router.push(`/checkin/done?${params.toString()}`)
     } catch (err) {
@@ -192,6 +200,28 @@ export default function CheckinClient() {
 
           <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
 
+            {/* 休みトグル */}
+            <div
+              className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
+                isDayOff ? 'bg-amber-50 border-amber-300' : 'bg-gray-50 border-gray-200'
+              }`}
+              onClick={() => setIsDayOff(!isDayOff)}
+            >
+              <span className="text-sm font-medium text-gray-800">今日の配信は休み</span>
+              <div
+                className={`relative w-11 h-6 rounded-full transition-colors ${
+                  isDayOff ? 'bg-amber-500' : 'bg-gray-300'
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    isDayOff ? 'translate-x-5' : ''
+                  }`}
+                />
+              </div>
+            </div>
+
+            {!isDayOff && <>
             {/* 配信時間 */}
             <div>
               <p className="text-sm font-medium text-gray-800 mb-2">
@@ -300,6 +330,7 @@ export default function CheckinClient() {
                 placeholder="今日感じたこと、気になることなど"
               />
             </div>
+            </>}
 
             {errorMsg && (
               <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">

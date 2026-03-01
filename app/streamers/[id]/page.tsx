@@ -35,14 +35,18 @@ function computeStats(
   monday.setUTCDate(jstNow.getUTCDate() - (dayOfWeek - 1))
   const mondayStr = getJstDateString(monday)
 
-  // チェックイン回答率: 今週（月〜今日）
-  const weekChecks = checks.filter((c) => c.date >= mondayStr && c.date <= todayStr)
-  const checkinRate = weekChecks.length / weekDenominator
+  // チェックイン回答率: 今週（月〜今日）— 休みは分母・分子から除外
+  const weekChecksAll = checks.filter((c) => c.date >= mondayStr && c.date <= todayStr)
+  const weekDayOffCount = weekChecksAll.filter((c) => c.is_day_off).length
+  const weekChecks = weekChecksAll.filter((c) => !c.is_day_off)
+  const adjustedDenominator = weekDenominator - weekDayOffCount
+  const checkinRate = adjustedDenominator > 0 ? weekChecks.length / adjustedDenominator : 0
 
-  // 直近チェックインのYES割合（最新1件）
-  const latestYes = checks.length > 0 ? yesRatio(checks[0].answers) : null
+  // 直近チェックインのYES割合（最新1件、休みを除く）
+  const latestNonDayOff = checks.find((c) => !c.is_day_off)
+  const latestYes = latestNonDayOff ? yesRatio(latestNonDayOff.answers) : null
 
-  // 今週のYES割合
+  // 今週のYES割合（休みを除く）
   const weekYes =
     weekChecks.length > 0
       ? weekChecks.reduce((sum, c) => sum + yesRatio(c.answers), 0) / weekChecks.length

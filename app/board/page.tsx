@@ -65,11 +65,12 @@ async function getBoardItems(): Promise<BoardItem[]> {
 
       let consecutiveMissing = 0
       for (const date of dates) {
-        if (!myChecks.some((c) => c.date === date)) consecutiveMissing++
-        else break
+        const check = myChecks.find((c) => c.date === date)
+        if (!check) consecutiveMissing++
+        else break // 休みでも提出済みとして扱う
       }
 
-      const scoredChecks = myChecks.filter((c) => c.overall_score !== null)
+      const scoredChecks = myChecks.filter((c) => c.overall_score !== null && !c.is_day_off)
       let scoreDrop = false
       if (scoredChecks.length >= 2 && todayCheck?.overall_score != null) {
         const avg = scoredChecks.reduce((s, c) => s + (c.overall_score ?? 0), 0) / scoredChecks.length
