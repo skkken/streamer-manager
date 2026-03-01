@@ -58,6 +58,31 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   const supabase = createServerClient()
   const { id } = await params
+
+  // 配信者の line_user_id を取得（line_registrations も削除するため）
+  const { data: streamer, error: fetchErr } = await supabase
+    .from('streamers')
+    .select('line_user_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchErr) {
+    captureApiError(fetchErr, '/api/streamers/[id]', 'DELETE')
+    return NextResponse.json({ error: '配信者が見つかりません' }, { status: 404 })
+  }
+
+  // line_registrations の関連レコードを削除
+  if (streamer.line_user_id) {
+    const { error: regErr } = await supabase
+      .from('line_registrations')
+      .delete()
+      .eq('line_user_id', streamer.line_user_id)
+
+    if (regErr) {
+      captureApiError(regErr, '/api/streamers/[id]', 'DELETE line_registrations')
+    }
+  }
+
   const { error } = await supabase
     .from('streamers')
     .delete()
