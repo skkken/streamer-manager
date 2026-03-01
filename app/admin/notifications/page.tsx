@@ -3,6 +3,7 @@ export const revalidate = 60
 import AdminLayout from '@/components/layout/AdminLayout'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
+import { requireAdminPage } from '@/lib/auth-guard'
 import NotificationsClient from './NotificationsClient'
 
 async function getActiveStreamersWithCheckStatus(date: string) {
@@ -41,6 +42,7 @@ export default async function NotificationsPage({
 }: {
   searchParams: Promise<{ date?: string }>
 }) {
+  await requireAdminPage()
   const { date: queryDate } = await searchParams
   const today = getJstDateString()
   const targetDate =

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { messageSettingsSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/message-settings
 export async function GET() {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   try {
@@ -31,7 +31,7 @@ export async function GET() {
 // PATCH /api/message-settings
 // body: { key: string; value: string }[]
 export async function PATCH(req: NextRequest) {
-  const { errorResponse: patchAuthErr } = await requireAuth()
+  const { errorResponse: patchAuthErr } = await requireAdminAuth()
   if (patchAuthErr) return patchAuthErr
 
   const parsed = await parseRequest(messageSettingsSchema, req)

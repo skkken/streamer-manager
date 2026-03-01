@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { parseRequest } from '@/lib/validations'
 import { updateLineChannelSchema } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
+import { encrypt } from '@/lib/crypto'
 
 type Params = { params: Promise<{ id: string }> }
 
 /** GET /api/line-channels/[id] */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   const { id } = await params
@@ -28,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 /** PATCH /api/line-channels/[id] */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   const { id } = await params
@@ -38,9 +39,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
 
   try {
+    const updateData = { ...parsed.data }
+    if (updateData.channel_secret) {
+      updateData.channel_secret = encrypt(updateData.channel_secret)
+    }
+    if (updateData.channel_access_token) {
+      updateData.channel_access_token = encrypt(updateData.channel_access_token)
+    }
+
     const { data, error } = await supabase
       .from('line_channels')
-      .update(parsed.data)
+      .update(updateData)
       .eq('id', id)
       .select('id, name, channel_id, is_active, webhook_path, updated_at')
       .single()
@@ -57,7 +66,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 /** DELETE /api/line-channels/[id] */
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   const { id } = await params

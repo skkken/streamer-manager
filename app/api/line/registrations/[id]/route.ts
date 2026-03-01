@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { registerLineUserSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ id: string }> }
  * body: { display_name, tiktok_id?, agency_name?, manager_name? }
  */
 export async function POST(req: NextRequest, { params }: Params) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   const supabase = createServerClient()
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest, { params }: Params) {
  * 登録待ちを削除（スパム・誤登録の除去用）
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { errorResponse: delAuthErr } = await requireAuth()
+  const { errorResponse: delAuthErr } = await requireAdminAuth()
   if (delAuthErr) return delAuthErr
 
   const supabase = createServerClient()

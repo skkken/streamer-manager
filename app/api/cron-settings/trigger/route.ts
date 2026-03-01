@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { captureApiError } from '@/lib/error-logger'
 
 const VALID_JOBS = ['schedule-daily-checkin', 'worker-send-line']
 
 export async function POST(req: NextRequest) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   try {

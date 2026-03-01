@@ -4,9 +4,10 @@ import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { sendLineMessage } from '@/lib/line'
 import { getMessageSettings } from '@/lib/messages'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { sendReminderSchema, parseBody } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
+import { decrypt } from '@/lib/crypto'
 
 /**
  * POST /api/line/send-reminder
@@ -16,7 +17,7 @@ import { captureApiError } from '@/lib/error-logger'
  * date を指定すると過去の未入力日分のトークンを発行できる
  */
 export async function POST(req: NextRequest) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   try {
@@ -58,7 +59,12 @@ export async function POST(req: NextRequest) {
         .select('id, channel_access_token')
         .in('id', channelIds)
       for (const ch of channels ?? []) {
-        channelTokenMap.set(ch.id, ch.channel_access_token)
+        try {
+          channelTokenMap.set(ch.id, decrypt(ch.channel_access_token))
+        } catch {
+          // 暗号化前のデータはそのまま使用
+          channelTokenMap.set(ch.id, ch.channel_access_token)
+        }
       }
     }
 

@@ -1,10 +1,12 @@
 import AdminLayout from '@/components/layout/AdminLayout'
 import { createServerClient } from '@/lib/supabase/server'
+import { requireAdminPage } from '@/lib/auth-guard'
 import LineRegistrationsClient from './LineRegistrationsClient'
 
 export const dynamic = 'force-dynamic'
 
 export default async function LineRegistrationsPage() {
+  await requireAdminPage()
   const supabase = createServerClient()
 
   const { data: registrations } = await supabase

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAdminAuth } from '@/lib/auth-guard'
 import { captureApiError } from '@/lib/error-logger'
 
 export async function GET() {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   try {
@@ -26,14 +26,15 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdminAuth()
   if (errorResponse) return errorResponse
 
   try {
     const body = await req.json()
     const { job_key, enabled } = body
 
-    if (typeof job_key !== 'string' || typeof enabled !== 'boolean') {
+    const VALID_JOB_KEYS = ['schedule-daily-checkin', 'worker-send-line']
+    if (typeof enabled !== 'boolean' || !VALID_JOB_KEYS.includes(job_key)) {
       return NextResponse.json(
         { error: 'job_key (string) と enabled (boolean) が必須です' },
         { status: 400 }

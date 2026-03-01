@@ -2,9 +2,11 @@ export const revalidate = 60
 
 import AdminLayout from '@/components/layout/AdminLayout'
 import { getMessageSettings } from '@/lib/messages'
+import { requireAdminPage } from '@/lib/auth-guard'
 import MessagesClient from './MessagesClient'
 
 export default async function MessagesPage() {
+  await requireAdminPage()
   const settings = await getMessageSettings()
 
   return (
