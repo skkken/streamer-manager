@@ -283,7 +283,7 @@ create table if not exists line_registrations (
 -- streamers level カラム追加
 -- ============================================================
 alter table streamers
-  add column if not exists level_current  int not null default 0,
+  add column if not exists level_current  int not null default 1,
   add column if not exists level_max      int not null default 0,
   add column if not exists level_override int;
 
@@ -295,7 +295,7 @@ begin
   ) then
     alter table streamers
       add constraint streamers_level_current_range
-      check (level_current between 0 and 4);
+      check (level_current between 1 and 8);
   end if;
 
   if not exists (
@@ -304,7 +304,7 @@ begin
   ) then
     alter table streamers
       add constraint streamers_level_max_range
-      check (level_max between 0 and 4);
+      check (level_max between 0 and 8);
   end if;
 
   if not exists (
@@ -313,7 +313,7 @@ begin
   ) then
     alter table streamers
       add constraint streamers_level_override_range
-      check (level_override is null or level_override between 0 and 4);
+      check (level_override is null or level_override between 1 and 8);
   end if;
 end $$;
 

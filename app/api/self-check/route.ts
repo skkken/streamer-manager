@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (streamer) {
-    const newLevelCurrent = Math.max(streamer.level_current ?? 0, levelMtd)
+    const newLevelCurrent = Math.max(streamer.level_current ?? 1, levelMtd)
     const newLevelMax = Math.max(streamer.level_max ?? 0, levelMtd)
     if (newLevelCurrent !== streamer.level_current || newLevelMax !== streamer.level_max) {
       await supabase
