@@ -1,7 +1,7 @@
 import SetPasswordForm from './SetPasswordForm'
 
 export const metadata = {
-  title: 'パスワード設定 | 配信者管理システム',
+  title: 'パスワード設定 | Streamer Manager',
 }
 
 export default function SetPasswordPage() {

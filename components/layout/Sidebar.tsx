@@ -26,9 +26,14 @@ export default function Sidebar({ pendingCount = 0, role = 'admin' }: { pendingC
   return (
     <aside className="w-56 min-h-screen bg-gray-900 text-white flex flex-col">
       <div className="px-6 py-5 border-b border-gray-700">
-        <span className="text-sm font-bold tracking-wider text-gray-300">
-          配信者管理
-        </span>
+        <Link href="/streamers" className="group flex items-center gap-2">
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-600 text-[10px] font-extrabold text-white shadow-md">
+            SM
+          </span>
+          <span className="text-sm font-semibold tracking-wide text-gray-100 group-hover:text-white transition-colors">
+            Streamer Manager
+          </span>
+        </Link>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.filter(item => !item.adminOnly || role === 'admin').map((item) => {

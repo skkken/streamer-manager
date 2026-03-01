@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '配信者管理システム',
+  title: 'Streamer Manager',
   description: '配信者育成・管理ツール',
 }
 
