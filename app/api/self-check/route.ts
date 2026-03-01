@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const tokenHash = hashToken(token)
   const now = new Date().toISOString()
 
-  // ---- 2. トークン検証 ----
+  // ---- 2. トークン検証 + 原子的に使用済みマーク（Race Condition 防止） ----
   const { data: tokenRow } = await supabase
     .from('checkin_tokens')
     .select('*')
@@ -58,7 +58,17 @@ export async function POST(req: NextRequest) {
   if (tokenRow.expires_at < now) {
     return NextResponse.json({ error: 'token expired' }, { status: 401 })
   }
-  if (tokenRow.used_at) {
+
+  // 原子的に used_at を設定（WHERE used_at IS NULL で競合を防止）
+  const { data: claimed, error: claimError } = await supabase
+    .from('checkin_tokens')
+    .update({ used_at: now })
+    .eq('id', tokenRow.id)
+    .is('used_at', null)
+    .select('id')
+    .single()
+
+  if (claimError || !claimed) {
     return NextResponse.json({ error: 'token already used' }, { status: 409 })
   }
 
@@ -125,13 +135,7 @@ export async function POST(req: NextRequest) {
     captureApiError(checkError, '/api/self-check', 'POST', { streamerId })
   }
 
-  // ---- 6. token を使用済みにする ----
-  await supabase
-    .from('checkin_tokens')
-    .update({ used_at: now })
-    .eq('id', tokenRow.id)
-
-  // ---- 7. checkin_thanks ジョブをキューに積む ----
+  // ---- 6. checkin_thanks ジョブをキューに積む ----
   await supabase
     .from('line_jobs')
     .upsert(

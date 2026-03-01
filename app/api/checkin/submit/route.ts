@@ -4,7 +4,7 @@ import { hashToken } from '@/lib/token'
 // getJstDateString は不要: トークンに紐づく date を使用する
 import { generateAiResult } from '@/lib/ai'
 import { TemplateField } from '@/lib/types'
-import { checkinSubmitSchema, parseBody } from '@/lib/validations'
+import { checkinSubmitSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 /**
@@ -21,7 +21,7 @@ import { captureApiError } from '@/lib/error-logger'
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
 
-  const parsed = parseBody(checkinSubmitSchema, await req.json())
+  const parsed = await parseRequest(checkinSubmitSchema, req)
   if (!parsed.success) return parsed.error
   const { token, answers, memo } = parsed.data
 
@@ -41,7 +41,17 @@ export async function POST(req: NextRequest) {
   if (tokenRow.expires_at < now) {
     return NextResponse.json({ error: 'token expired' }, { status: 401 })
   }
-  if (tokenRow.used_at) {
+
+  // 原子的に used_at を設定（WHERE used_at IS NULL で競合を防止）
+  const { data: claimed, error: claimError } = await supabase
+    .from('checkin_tokens')
+    .update({ used_at: now })
+    .eq('id', tokenRow.id)
+    .is('used_at', null)
+    .select('id')
+    .single()
+
+  if (claimError || !claimed) {
     return NextResponse.json({ error: 'token already used' }, { status: 409 })
   }
 
@@ -102,13 +112,7 @@ export async function POST(req: NextRequest) {
     captureApiError(checkError, '/api/checkin/submit', 'POST')
   }
 
-  // ---- 5. token を使用済みにする ----
-  await supabase
-    .from('checkin_tokens')
-    .update({ used_at: now })
-    .eq('id', tokenRow.id)
-
-  // ---- 6. checkin_thanks ジョブをキューに積む（冪等） ----
+  // ---- 5. checkin_thanks ジョブをキューに積む（冪等） ----
   await supabase
     .from('line_jobs')
     .upsert(
