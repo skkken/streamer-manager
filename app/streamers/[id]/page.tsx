@@ -62,7 +62,7 @@ function computeStats(
 async function getData(id: string) {
   try {
     const supabase = createServerClient()
-    const [streamerRes, checksRes, notesRes, earningsRes, templatesRes] = await Promise.all([
+    const [streamerRes, checksRes, notesRes, earningsRes, templatesRes, channelsRes] = await Promise.all([
       supabase.from('streamers').select('*').eq('id', id).single(),
       supabase
         .from('self_checks')
@@ -80,6 +80,7 @@ async function getData(id: string) {
         .select('date, diamonds, streaming_minutes')
         .eq('streamer_id', id),
       supabase.from('self_check_templates').select('id, schema'),
+      supabase.from('line_channels').select('id, name'),
     ])
     const earnings = earningsRes.data ?? []
     const totalDiamonds = earnings.reduce((sum, r) => sum + (r.diamonds ?? 0), 0)
@@ -95,16 +96,11 @@ async function getData(id: string) {
       templateFields[t.id] = ((t.schema as TemplateSchema) ?? {}).fields ?? []
     }
 
-    // チャネル名を取得
-    let channelName: string | null = null
-    if (streamerRes.data?.line_channel_id) {
-      const { data: ch } = await supabase
-        .from('line_channels')
-        .select('name')
-        .eq('id', streamerRes.data.line_channel_id)
-        .single()
-      channelName = ch?.name ?? null
-    }
+    // チャネル名を取得（並列取得済みのデータからマップ参照）
+    const channelNameMap = new Map((channelsRes.data ?? []).map((ch) => [ch.id, ch.name]))
+    const channelName = streamerRes.data?.line_channel_id
+      ? channelNameMap.get(streamerRes.data.line_channel_id) ?? null
+      : null
 
     return {
       streamer: streamerRes.data,
