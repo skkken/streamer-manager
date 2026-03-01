@@ -85,6 +85,9 @@ export async function POST(req: Request) {
       if (inviteError.message?.includes('already been registered')) {
         return NextResponse.json({ error: 'このメールアドレスは既に登録されています' }, { status: 409 })
       }
+      if (inviteError.status === 429 || inviteError.message?.includes('rate_limit')) {
+        return NextResponse.json({ error: 'メール送信の制限に達しました。しばらく待ってから再度お試しください' }, { status: 429 })
+      }
       captureApiError(inviteError, '/api/admin/users', 'POST')
       return NextResponse.json({ error: '招待メールの送信に失敗しました' }, { status: 500 })
     }
