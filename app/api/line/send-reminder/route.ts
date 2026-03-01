@@ -77,21 +77,35 @@ export async function POST(req: NextRequest) {
         ? channelTokenMap.get(streamer.line_channel_id)
         : undefined
 
-      // トークン発行（既存があれば上書き）
+      // トークン発行（使用済みの場合はスキップ）
+      const { data: existingToken } = await supabase
+        .from('checkin_tokens')
+        .select('id, used_at, token_hash')
+        .eq('streamer_id', streamer.id)
+        .eq('date', targetDate)
+        .maybeSingle()
+
+      if (existingToken?.used_at) {
+        // 既にチェックイン済み → リマインド不要
+        continue
+      }
+
       const rawToken = generateToken()
       const tokenHash = hashToken(rawToken)
-      await supabase
-        .from('checkin_tokens')
-        .upsert(
-          {
-            streamer_id: streamer.id,
-            date: targetDate,
-            token_hash: tokenHash,
-            expires_at: expiresAt,
-            used_at: null,
-          },
-          { onConflict: 'streamer_id,date' }
-        )
+      if (!existingToken) {
+        await supabase.from('checkin_tokens').insert({
+          streamer_id: streamer.id,
+          date: targetDate,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
+        })
+      } else {
+        await supabase
+          .from('checkin_tokens')
+          .update({ token_hash: tokenHash, expires_at: expiresAt })
+          .eq('id', existingToken.id)
+          .is('used_at', null)
+      }
 
       const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
       // "2026-02-28" → "2月28日"
