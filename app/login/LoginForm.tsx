@@ -30,7 +30,9 @@ export default function LoginForm() {
       return
     }
 
-    const redirectTo = searchParams.get('redirectTo') || '/streamers'
+    const raw = searchParams.get('redirectTo') || '/streamers'
+    // Open Redirect 防止: 相対パスのみ許可
+    const redirectTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/streamers'
     router.push(redirectTo)
     router.refresh()
   }
