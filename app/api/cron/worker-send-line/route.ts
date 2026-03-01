@@ -108,12 +108,13 @@ export async function POST(req: NextRequest) {
     // レベル未設定（0含む）の場合はスキップ
     const effectiveLevel = streamer?.level_override ?? (streamer?.level_current || null)
 
-    // 無効化またはレベル未設定の場合はスキップ
+    // 無効化・レベル未設定・レベルG(8)の場合はスキップ
     if (
       !streamer ||
       streamer.status !== 'active' ||
       !streamer.notify_enabled ||
-      effectiveLevel === null
+      effectiveLevel === null ||
+      effectiveLevel === 8
     ) {
       await supabase
         .from('line_jobs')

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   // active + 通知有効な配信者を取得
   const { data: streamers, error: sErr } = await supabase
     .from('streamers')
-    .select('id, display_name, line_user_id, line_channel_id')
+    .select('id, display_name, line_user_id, line_channel_id, level_current, level_override')
     .eq('status', 'active')
     .eq('notify_enabled', true)
 
@@ -48,6 +48,10 @@ export async function POST(req: NextRequest) {
   let jobCreated = 0
 
   for (const streamer of streamers) {
+    // レベルG(8)はチェックインリンクを送らない
+    const effectiveLevel = streamer.level_override ?? (streamer.level_current || null)
+    if (effectiveLevel === 8) continue
+
     // --- トークン発行（冪等: UNIQUE(streamer_id, date)）---
     const rawToken = generateToken()
     const tokenHash = hashToken(rawToken)
