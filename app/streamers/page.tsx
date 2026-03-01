@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 import AdminLayout from '@/components/layout/AdminLayout'
 import Link from 'next/link'
@@ -32,9 +32,11 @@ async function getData(): Promise<StreamerRow[]> {
     monday.setUTCDate(jstNow.getUTCDate() - (dayOfWeek - 1))
     const mondayStr = getJstDateString(monday)
 
-    const [streamersRes, earningsRes, checksRes, notesRes, channelsRes] = await Promise.all([
+    const monthStart = monthKey + '-01'
+
+    const [streamersRes, earningsSummaryRes, checksRes, notesRes, channelsRes] = await Promise.all([
       supabase.from('streamers').select('*').order('created_at', { ascending: false }),
-      supabase.from('daily_earnings').select('streamer_id, date, diamonds, streaming_minutes'),
+      supabase.rpc('get_earnings_summary', { month_start: monthStart }),
       supabase
         .from('self_checks')
         .select('streamer_id, date, answers')
@@ -55,18 +57,11 @@ async function getData(): Promise<StreamerRow[]> {
       channelNameMap.set(ch.id, ch.name)
     }
 
-    // ダイヤ・配信時間集計（累計 & 今月）
-    const totalDiamondMap = new Map<string, number>()
-    const monthDiamondMap = new Map<string, number>()
-    const totalStreamingMap = new Map<string, number>()
-    const monthStreamingMap = new Map<string, number>()
-    for (const r of earningsRes.data ?? []) {
-      totalDiamondMap.set(r.streamer_id, (totalDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
-      totalStreamingMap.set(r.streamer_id, (totalStreamingMap.get(r.streamer_id) ?? 0) + (r.streaming_minutes ?? 0))
-      if (r.date.startsWith(monthKey)) {
-        monthDiamondMap.set(r.streamer_id, (monthDiamondMap.get(r.streamer_id) ?? 0) + (r.diamonds ?? 0))
-        monthStreamingMap.set(r.streamer_id, (monthStreamingMap.get(r.streamer_id) ?? 0) + (r.streaming_minutes ?? 0))
-      }
+    // ダイヤ・配信時間集計マップ（DB側で SUM/GROUP BY 済み）
+    type EarningsSummary = { streamer_id: string; total_diamonds: number; month_diamonds: number; total_streaming_minutes: number; month_streaming_minutes: number }
+    const earningsMap = new Map<string, EarningsSummary>()
+    for (const r of (earningsSummaryRes.data ?? []) as EarningsSummary[]) {
+      earningsMap.set(r.streamer_id, r)
     }
 
     // 最新スタッフノートステータス（streamer_idごとに最初の1件 = 最新）
@@ -91,12 +86,13 @@ async function getData(): Promise<StreamerRow[]> {
     return streamers.map((s) => {
       const cnt = weekCheckinCountMap.get(s.id) ?? 0
       const weekCnt = weekYesCountMap.get(s.id) ?? 0
+      const earn = earningsMap.get(s.id)
       return {
         ...s,
-        totalDiamonds: totalDiamondMap.get(s.id) ?? 0,
-        monthDiamonds: monthDiamondMap.get(s.id) ?? 0,
-        totalStreamingMinutes: totalStreamingMap.get(s.id) ?? 0,
-        monthStreamingMinutes: monthStreamingMap.get(s.id) ?? 0,
+        totalDiamonds: earn?.total_diamonds ?? 0,
+        monthDiamonds: earn?.month_diamonds ?? 0,
+        totalStreamingMinutes: earn?.total_streaming_minutes ?? 0,
+        monthStreamingMinutes: earn?.month_streaming_minutes ?? 0,
         checkinRate: cnt / weekDenominator,
         weekYes: weekCnt > 0 ? (weekYesSumMap.get(s.id) ?? 0) / weekCnt : null,
         latestNoteStatus: latestNoteStatusMap.get(s.id) ?? null,

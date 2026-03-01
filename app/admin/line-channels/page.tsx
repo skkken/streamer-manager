@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 import AdminLayout from '@/components/layout/AdminLayout'
 import { createServerClient } from '@/lib/supabase/server'

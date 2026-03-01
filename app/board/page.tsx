@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 import AdminLayout from '@/components/layout/AdminLayout'
 import Link from 'next/link'
