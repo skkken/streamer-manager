@@ -1,6 +1,7 @@
 export const revalidate = 120
 
 import AdminLayout from '@/components/layout/AdminLayout'
+import { requireAdminPage } from '@/lib/auth-guard'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -24,6 +25,7 @@ async function getTemplates(): Promise<SelfCheckTemplate[]> {
 }
 
 export default async function TemplatesPage() {
+  await requireAdminPage()
   const templates = await getTemplates()
 
   return (

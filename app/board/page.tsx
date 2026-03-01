@@ -1,6 +1,7 @@
 export const revalidate = 30
 
 import AdminLayout from '@/components/layout/AdminLayout'
+import { requireAdminPage } from '@/lib/auth-guard'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
 import Card, { CardHeader } from '@/components/ui/Card'
@@ -102,6 +103,7 @@ async function getBoardItems(): Promise<BoardItem[]> {
 }
 
 export default async function BoardPage() {
+  await requireAdminPage()
   const items = await getBoardItems()
   const danger = items.filter((i) => i.priority === 'danger')
   const warning = items.filter((i) => i.priority === 'warning')

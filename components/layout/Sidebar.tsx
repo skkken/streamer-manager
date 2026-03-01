@@ -4,21 +4,23 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
+import type { UserRole } from '@/lib/types'
+
 const BADGE_HREF = '/admin/line-registrations'
 
-const navItems = [
+const navItems: { label: string; href: string; adminOnly?: boolean }[] = [
   { label: '配信者一覧', href: '/streamers' },
-  { label: 'テンプレ管理', href: '/templates' },
-  { label: '運用ボード', href: '/board' },
-  { label: 'LINE登録待ち', href: BADGE_HREF },
-  { label: 'LINEチャネル', href: '/admin/line-channels' },
-  { label: 'ユーザー管理', href: '/admin/users' },
-  { label: '通知ジョブ', href: '/admin/notifications' },
-  { label: 'メッセージ設定', href: '/admin/messages' },
-  { label: 'Cron設定', href: '/admin/cron' },
+  { label: 'テンプレ管理', href: '/templates', adminOnly: true },
+  { label: '運用ボード', href: '/board', adminOnly: true },
+  { label: 'LINE登録待ち', href: BADGE_HREF, adminOnly: true },
+  { label: 'LINEチャネル', href: '/admin/line-channels', adminOnly: true },
+  { label: 'ユーザー管理', href: '/admin/users', adminOnly: true },
+  { label: '通知ジョブ', href: '/admin/notifications', adminOnly: true },
+  { label: 'メッセージ設定', href: '/admin/messages', adminOnly: true },
+  { label: 'Cron設定', href: '/admin/cron', adminOnly: true },
 ]
 
-export default function Sidebar({ pendingCount = 0 }: { pendingCount?: number }) {
+export default function Sidebar({ pendingCount = 0, role = 'admin' }: { pendingCount?: number; role?: UserRole }) {
   const pathname = usePathname()
 
   return (
@@ -29,7 +31,7 @@ export default function Sidebar({ pendingCount = 0 }: { pendingCount?: number })
         </span>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.adminOnly || role === 'admin').map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(item.href + '/')
           return (

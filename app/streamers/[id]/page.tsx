@@ -127,7 +127,7 @@ export default async function StreamerDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { channelIds } = await getPagePermissions()
+  const { role, channelIds } = await getPagePermissions()
   const { streamer, checks, notes, stats, templateFields, earningsByDate, channelName } = await getData(id)
 
   if (!streamer) {
@@ -141,7 +141,7 @@ export default async function StreamerDetailPage({
 
   return (
     <AdminLayout title="配信者詳細">
-      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} earningsByDate={earningsByDate} channelName={channelName} />
+      <StreamerDetailClient streamer={streamer} checks={checks} notes={notes} stats={stats} templateFields={templateFields} earningsByDate={earningsByDate} channelName={channelName} role={role} />
     </AdminLayout>
   )
 }

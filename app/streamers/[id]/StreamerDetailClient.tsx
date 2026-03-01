@@ -87,6 +87,7 @@ export default function StreamerDetailClient({
   templateFields,
   earningsByDate,
   channelName,
+  role = 'admin',
 }: {
   streamer: Streamer
   checks: SelfCheck[]
@@ -95,6 +96,7 @@ export default function StreamerDetailClient({
   templateFields: Record<string, TemplateField[]>
   earningsByDate: Record<string, { diamonds: number; streaming_minutes: number }>
   channelName: string | null
+  role?: 'admin' | 'staff'
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<'checks' | 'notes'>('checks')
@@ -285,20 +287,22 @@ export default function StreamerDetailClient({
               <p className="mt-3 text-xs text-red-600">{deleteError}</p>
             )}
 
-            <div className="mt-4 flex gap-2">
-              <Link href={`/streamers/${streamer.id}/edit`} className="flex-1">
-                <Button size="sm" variant="secondary" className="w-full">
-                  編集
-                </Button>
-              </Link>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {deleting ? '削除中…' : '削除'}
-              </button>
-            </div>
+            {role === 'admin' && (
+              <div className="mt-4 flex gap-2">
+                <Link href={`/streamers/${streamer.id}/edit`} className="flex-1">
+                  <Button size="sm" variant="secondary" className="w-full">
+                    編集
+                  </Button>
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {deleting ? '削除中…' : '削除'}
+                </button>
+              </div>
+            )}
           </CardBody>
         </Card>
 
