@@ -6,6 +6,7 @@ import type { AiType } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
 import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
 import { verifyCronSecret } from '@/lib/cron-auth'
+import { decrypt } from '@/lib/crypto'
 
 const BATCH_LIMIT = 50
 const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは再取得可能
@@ -82,7 +83,13 @@ export async function POST(req: NextRequest) {
   const streamerMap = new Map((streamersRes.data ?? []).map((s) => [s.id, s]))
   const channelTokenCache = new Map<string, string>()
   for (const ch of channelsRes.data ?? []) {
-    if (ch.channel_access_token) channelTokenCache.set(ch.id, ch.channel_access_token)
+    if (ch.channel_access_token) {
+      try {
+        channelTokenCache.set(ch.id, decrypt(ch.channel_access_token))
+      } catch {
+        channelTokenCache.set(ch.id, ch.channel_access_token)
+      }
+    }
   }
 
   function getChannelToken(lineChannelId: string | null): string | undefined {
