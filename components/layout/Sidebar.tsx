@@ -12,6 +12,7 @@ const navItems = [
   { label: '運用ボード', href: '/board' },
   { label: 'LINE登録待ち', href: BADGE_HREF },
   { label: 'LINEチャネル', href: '/admin/line-channels' },
+  { label: 'ユーザー管理', href: '/admin/users' },
   { label: '通知ジョブ', href: '/admin/notifications' },
   { label: 'メッセージ設定', href: '/admin/messages' },
   { label: 'Cron設定', href: '/admin/cron' },
