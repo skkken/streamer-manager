@@ -7,6 +7,7 @@ import Card, { CardHeader } from '@/components/ui/Card'
 import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { BoardItem, BoardPriority } from '@/lib/types'
+import { detectNegativeInText } from '@/lib/ai'
 
 const priorityLabel: Record<BoardPriority, string> = {
   danger: '危険',
@@ -18,13 +19,6 @@ const priorityVariant: Record<BoardPriority, 'red' | 'yellow' | 'gray'> = {
   danger: 'red',
   warning: 'yellow',
   normal: 'gray',
-}
-
-const NEGATIVE_WORDS = ['辞め', '無理', '辛い', 'しんどい', '向いてない', 'きつい']
-
-function detectNeg(text: string | null): boolean {
-  if (!text) return false
-  return NEGATIVE_WORDS.some((w) => text.includes(w))
 }
 
 async function getBoardItems(): Promise<BoardItem[]> {
@@ -85,10 +79,10 @@ async function getBoardItems(): Promise<BoardItem[]> {
       let negativeDetected = false
       if (todayCheck) {
         if (todayCheck.ai_negative_detected) negativeDetected = true
-        if (detectNeg(todayCheck.memo)) negativeDetected = true
+        if (detectNegativeInText(todayCheck.memo)) negativeDetected = true
         if (todayCheck.answers) {
           const texts = Object.values(todayCheck.answers).filter((v) => typeof v === 'string') as string[]
-          if (detectNeg(texts.join(' '))) negativeDetected = true
+          if (detectNegativeInText(texts.join(' '))) negativeDetected = true
         }
       }
 

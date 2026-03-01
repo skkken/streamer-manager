@@ -3,13 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { getJstDateString } from '@/lib/jst'
 import { BoardItem, BoardPriority } from '@/lib/types'
 import { requireAuth } from '@/lib/auth-guard'
-
-const NEGATIVE_WORDS = ['辞め', '無理', '辛い', 'しんどい', '向いてない', 'きつい']
-
-function detectNegativeInText(text: string | null): boolean {
-  if (!text) return false
-  return NEGATIVE_WORDS.some((w) => text.includes(w))
-}
+import { detectNegativeInText } from '@/lib/ai'
 
 export async function GET() {
   const { errorResponse } = await requireAuth()
