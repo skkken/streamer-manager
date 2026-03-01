@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data, { status: 201 })
   } catch (err) {
     captureApiError(err, '/api/line-channels', 'POST')
-    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'サーバーエラーが発生しました'
+    console.error('[POST /api/line-channels] Error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
