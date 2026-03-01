@@ -120,6 +120,7 @@ export interface DailyEarning {
   streamer_id: string
   date: string
   diamonds: number
+  streaming_minutes: number
   created_at: string
   updated_at: string
 }
