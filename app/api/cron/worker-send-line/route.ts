@@ -65,19 +65,29 @@ export async function POST(req: NextRequest) {
     .update({ status: 'sending', locked_at: nowIso })
     .in('id', jobIds)
 
-  // チャネルトークンをキャッシュ（同一バッチ内で重複取得を避ける）
+  // バッチで配信者情報とチャネルトークンを一括取得（N+1 回避）
+  const streamerIds = [...new Set(jobs.map((j) => j.streamer_id))]
+  const channelIds = [...new Set(jobs.map((j) => j.line_channel_id).filter(Boolean))] as string[]
+
+  const [streamersRes, channelsRes] = await Promise.all([
+    supabase
+      .from('streamers')
+      .select('id, display_name, line_user_id, notify_enabled, status, level_override, level_current')
+      .in('id', streamerIds),
+    channelIds.length > 0
+      ? supabase.from('line_channels').select('id, channel_access_token').in('id', channelIds)
+      : Promise.resolve({ data: [] as { id: string; channel_access_token: string }[] }),
+  ])
+
+  const streamerMap = new Map((streamersRes.data ?? []).map((s) => [s.id, s]))
   const channelTokenCache = new Map<string, string>()
-  async function getChannelToken(lineChannelId: string | null): Promise<string | undefined> {
+  for (const ch of channelsRes.data ?? []) {
+    if (ch.channel_access_token) channelTokenCache.set(ch.id, ch.channel_access_token)
+  }
+
+  function getChannelToken(lineChannelId: string | null): string | undefined {
     if (!lineChannelId) return undefined
-    if (channelTokenCache.has(lineChannelId)) return channelTokenCache.get(lineChannelId)
-    const { data: ch } = await supabase
-      .from('line_channels')
-      .select('channel_access_token')
-      .eq('id', lineChannelId)
-      .single()
-    const token = ch?.channel_access_token as string | undefined
-    if (token) channelTokenCache.set(lineChannelId, token)
-    return token
+    return channelTokenCache.get(lineChannelId)
   }
 
   let sent = 0
@@ -85,15 +95,8 @@ export async function POST(req: NextRequest) {
   let skipped = 0
 
   for (const job of jobs) {
-    // 配信者情報取得
-    const { data: streamer } = await supabase
-      .from('streamers')
-      .select('id, display_name, line_user_id, notify_enabled, status, level_override, level_current')
-      .eq('id', job.streamer_id)
-      .single()
-
-    // チャネルトークンを解決
-    const channelToken = await getChannelToken(job.line_channel_id as string | null)
+    const streamer = streamerMap.get(job.streamer_id) ?? null
+    const channelToken = getChannelToken(job.line_channel_id as string | null)
 
     // レベル未設定（0含む）の場合はスキップ
     const effectiveLevel = streamer?.level_override ?? (streamer?.level_current || null)
