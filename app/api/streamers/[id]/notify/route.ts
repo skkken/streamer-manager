@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { notifyToggleSchema, parseBody } from '@/lib/validations'
+import { notifyToggleSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 type Params = { params: Promise<{ id: string }> }
@@ -18,7 +18,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
   const { id } = await params
 
-  const parsed = parseBody(notifyToggleSchema, await req.json())
+  const parsed = await parseRequest(notifyToggleSchema, req)
   if (!parsed.success) return parsed.error
   const { notify_enabled } = parsed.data
 

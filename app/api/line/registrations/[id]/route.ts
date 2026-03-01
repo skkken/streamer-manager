@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { registerLineUserSchema, parseBody } from '@/lib/validations'
+import { registerLineUserSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 type Params = { params: Promise<{ id: string }> }
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
   const { id } = await params
 
-  const parsed = parseBody(registerLineUserSchema, await req.json())
+  const parsed = await parseRequest(registerLineUserSchema, req)
   if (!parsed.success) return parsed.error
   const { display_name, tiktok_id, office_name, agency_name, manager_name, line_channel_id } = parsed.data
 

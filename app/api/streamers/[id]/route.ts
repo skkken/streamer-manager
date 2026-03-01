@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { updateStreamerSchema, parseBody } from '@/lib/validations'
+import { updateStreamerSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 type Params = { params: Promise<{ id: string }> }
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const supabase = createServerClient()
   const { id } = await params
 
-  const parsed = parseBody(updateStreamerSchema, await req.json())
+  const parsed = await parseRequest(updateStreamerSchema, req)
   if (!parsed.success) return parsed.error
 
   const { data, error } = await supabase

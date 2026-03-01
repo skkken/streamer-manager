@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { createTemplateSchema, templateSchemaSchema, parseBody } from '@/lib/validations'
+import { createTemplateSchema, templateSchemaSchema, parseBody, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 export async function GET() {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient()
 
-  const parsed = parseBody(createTemplateSchema, await req.json())
+  const parsed = await parseRequest(createTemplateSchema, req)
   if (!parsed.success) return parsed.error
 
   const { name, for_level, schema_json } = parsed.data

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { parseBody } from '@/lib/validations'
+import { parseRequest } from '@/lib/validations'
 import { updateLineChannelSchema } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (errorResponse) return errorResponse
 
   const { id } = await params
-  const parsed = parseBody(updateLineChannelSchema, await req.json())
+  const parsed = await parseRequest(updateLineChannelSchema, req)
   if (!parsed.success) return parsed.error
 
   const supabase = createServerClient()

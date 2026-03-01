@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { messageSettingsSchema, parseBody } from '@/lib/validations'
+import { messageSettingsSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/message-settings
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest) {
   const { errorResponse: patchAuthErr } = await requireAuth()
   if (patchAuthErr) return patchAuthErr
 
-  const parsed = parseBody(messageSettingsSchema, await req.json())
+  const parsed = await parseRequest(messageSettingsSchema, req)
   if (!parsed.success) return parsed.error
 
   try {

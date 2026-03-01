@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { parseBody } from '@/lib/validations'
+import { parseRequest } from '@/lib/validations'
 import { createLineChannelSchema } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const { errorResponse } = await requireAuth()
   if (errorResponse) return errorResponse
 
-  const parsed = parseBody(createLineChannelSchema, await req.json())
+  const parsed = await parseRequest(createLineChannelSchema, req)
   if (!parsed.success) return parsed.error
 
   const supabase = createServerClient()

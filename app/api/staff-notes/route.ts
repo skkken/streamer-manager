@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth-guard'
-import { createStaffNoteSchema, parseBody } from '@/lib/validations'
+import { createStaffNoteSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 
 // GET /api/staff-notes?streamer_id=xxx
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient()
 
-  const parsed = parseBody(createStaffNoteSchema, await req.json())
+  const parsed = await parseRequest(createStaffNoteSchema, req)
   if (!parsed.success) return parsed.error
 
   const { streamer_id, date, category, current_state, action, next_action, status } = parsed.data
