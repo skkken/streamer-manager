@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
@@ -25,7 +25,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   const hmac = createHmac('sha256', channel.channel_secret)
   hmac.update(body)
   const expected = hmac.digest('base64')
-  if (signature !== expected) {
+  const sigBuf = Buffer.from(signature, 'base64')
+  const expBuf = Buffer.from(expected, 'base64')
+  if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
@@ -69,18 +71,28 @@ export async function POST(req: NextRequest, { params }: Params) {
           const rawToken = generateToken()
           const tokenHash = hashToken(rawToken)
 
-          await supabase
+          // トークン発行（未使用の場合のみ上書き、使用済みならスキップ）
+          const { data: existingToken } = await supabase
             .from('checkin_tokens')
-            .upsert(
-              {
-                streamer_id: existingStreamer.id,
-                date: today,
-                token_hash: tokenHash,
-                expires_at: expiresAt,
-                used_at: null,
-              },
-              { onConflict: 'streamer_id,date' }
-            )
+            .select('id, used_at')
+            .eq('streamer_id', existingStreamer.id)
+            .eq('date', today)
+            .maybeSingle()
+
+          if (!existingToken) {
+            await supabase.from('checkin_tokens').insert({
+              streamer_id: existingStreamer.id,
+              date: today,
+              token_hash: tokenHash,
+              expires_at: expiresAt,
+            })
+          } else if (!existingToken.used_at) {
+            await supabase
+              .from('checkin_tokens')
+              .update({ token_hash: tokenHash, expires_at: expiresAt })
+              .eq('id', existingToken.id)
+              .is('used_at', null)
+          }
 
           const appUrl =
             process.env.NEXT_PUBLIC_APP_URL ??

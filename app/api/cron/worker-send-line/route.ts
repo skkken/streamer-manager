@@ -5,6 +5,7 @@ import { sendLineMessage, buildCheckinMessage, buildThanksMessage } from '@/lib/
 import type { AiType } from '@/lib/types'
 import { getMessageSettings } from '@/lib/messages'
 import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
+import { verifyCronSecret } from '@/lib/cron-auth'
 
 const BATCH_LIMIT = 50
 const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは再取得可能
@@ -23,9 +24,7 @@ const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは
  * 4. 成功→sent、失敗→attempts+1、attempts>=3→failed
  */
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!verifyCronSecret(req.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -135,11 +134,23 @@ export async function POST(req: NextRequest) {
         const newHash = hashToken(rawToken)
         const expiresAt = getTokenExpiry(today).toISOString()
 
-        await supabase
+        // 使用済みトークンはリセットしない
+        const { count } = await supabase
           .from('checkin_tokens')
-          .update({ token_hash: newHash, expires_at: expiresAt, used_at: null })
+          .update({ token_hash: newHash, expires_at: expiresAt })
           .eq('streamer_id', job.streamer_id)
           .eq('date', today)
+          .is('used_at', null)
+
+        if (count === 0) {
+          // 既にチェックイン済み → 送信スキップ
+          await supabase
+            .from('line_jobs')
+            .update({ status: 'skipped', locked_at: null })
+            .eq('id', job.id)
+          skipped++
+          continue
+        }
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
         const url = `${appUrl}/checkin?t=${rawToken}`

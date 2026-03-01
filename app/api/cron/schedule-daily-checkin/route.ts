@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
+import { verifyCronSecret } from '@/lib/cron-auth'
 
 /**
  * POST /api/cron/schedule-daily-checkin
@@ -16,10 +17,7 @@ import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
  * 3. line_jobs に daily_checkin キューを積む（冪等）
  */
 export async function POST(req: NextRequest) {
-  // Vercel Cron からの呼び出し or 手動実行を確認
-  const authHeader = req.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!verifyCronSecret(req.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -62,7 +60,6 @@ export async function POST(req: NextRequest) {
           date,
           token_hash: tokenHash,
           expires_at: expiresAt,
-          used_at: null,
         },
         { onConflict: 'streamer_id,date', ignoreDuplicates: true }
       )
