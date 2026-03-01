@@ -25,7 +25,7 @@ export default function TemplateActions({
     try {
       await fetch(`/api/templates/${id}/activate`, { method: 'POST' })
       router.refresh()
-    } catch (_e) {
+    } catch {
       setError('有効化に失敗しました')
     } finally {
       setActivating(false)
@@ -44,12 +44,12 @@ export default function TemplateActions({
       if (!res.ok) {
         const text = await res.text()
         let message = '無効化に失敗しました'
-        try { message = JSON.parse(text).error ?? message } catch (_e) {}
+        try { message = JSON.parse(text).error ?? message } catch {}
         setError(message)
         return
       }
       router.refresh()
-    } catch (_e) {
+    } catch {
       setError('無効化に失敗しました')
     } finally {
       setDeactivating(false)
@@ -66,13 +66,13 @@ export default function TemplateActions({
         const text = await res.text()
         let message = '削除に失敗しました'
         if (text) {
-          try { message = JSON.parse(text).error ?? message } catch (_e) {}
+          try { message = JSON.parse(text).error ?? message } catch {}
         }
         setError(message)
         return
       }
       router.refresh()
-    } catch (_e) {
+    } catch {
       setError('削除に失敗しました')
     } finally {
       setDeleting(false)

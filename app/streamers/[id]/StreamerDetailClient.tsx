@@ -154,14 +154,14 @@ export default function StreamerDetailClient({
       if (!res.ok) {
         const text = await res.text()
         let message = '更新に失敗しました'
-        try { message = JSON.parse(text).error ?? message } catch (_e) {}
+        try { message = JSON.parse(text).error ?? message } catch {}
         setUpdateError(message)
         return
       }
       const updated = await res.json()
       setNotesList(notesList.map((n) => (n.id === editingNoteId ? updated : n)))
       setEditingNoteId(null)
-    } catch (_e) {
+    } catch {
       setUpdateError('更新に失敗しました')
     } finally {
       setUpdating(false)
@@ -178,13 +178,13 @@ export default function StreamerDetailClient({
         const text = await res.text()
         let message = '削除に失敗しました'
         if (text) {
-          try { message = JSON.parse(text).error ?? message } catch (_e) {}
+          try { message = JSON.parse(text).error ?? message } catch {}
         }
         setDeleteError(message)
         return
       }
       router.push('/streamers')
-    } catch (_e) {
+    } catch {
       setDeleteError('削除に失敗しました')
     } finally {
       setDeleting(false)
@@ -204,7 +204,7 @@ export default function StreamerDetailClient({
       if (!res.ok) {
         const text = await res.text()
         let message = '追加に失敗しました'
-        try { message = JSON.parse(text).error ?? message } catch (_e) {}
+        try { message = JSON.parse(text).error ?? message } catch {}
         setSubmitError(message)
         return
       }
@@ -219,7 +219,7 @@ export default function StreamerDetailClient({
         next_action: '',
         status: 'preparing',
       })
-    } catch (_e) {
+    } catch {
       setSubmitError('追加に失敗しました')
     } finally {
       setSubmitting(false)

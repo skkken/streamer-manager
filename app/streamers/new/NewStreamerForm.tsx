@@ -37,7 +37,7 @@ export default function NewStreamerForm() {
         let message = '作成に失敗しました'
         const text = await res.text()
         if (text) {
-          try { message = JSON.parse(text).error ?? message } catch (_e) {}
+          try { message = JSON.parse(text).error ?? message } catch {}
         }
         throw new Error(message)
       }
