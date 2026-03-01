@@ -7,6 +7,7 @@ import { getMessageSettings } from '@/lib/messages'
 import { isCronEnabled, updateCronResult } from '@/lib/cron-settings'
 import { verifyCronSecret } from '@/lib/cron-auth'
 import { decrypt } from '@/lib/crypto'
+import { getAppUrl } from '@/lib/app-url'
 
 const BATCH_LIMIT = 50
 const LOCK_TIMEOUT_MINUTES = 5 // 5分以上前にロックされたジョブは再取得可能
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
+        const appUrl = getAppUrl()
         const url = `${appUrl}/checkin?t=${rawToken}`
         const [, mm, dd] = today.split('-')
         const dateLabel = `${Number(mm)}月${Number(dd)}日`

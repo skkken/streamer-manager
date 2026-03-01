@@ -8,6 +8,7 @@ import { requireAdminAuth } from '@/lib/auth-guard'
 import { sendReminderSchema, parseBody } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
 import { decrypt } from '@/lib/crypto'
+import { getAppUrl } from '@/lib/app-url'
 
 /**
  * POST /api/line/send-reminder
@@ -35,11 +36,7 @@ export async function POST(req: NextRequest) {
     const targetExpiry = getTokenExpiry(targetDate)
     const todayExpiry = getTokenExpiry() // 今日の翌日12:00 JST
     const expiresAt = (targetExpiry > todayExpiry ? targetExpiry : todayExpiry).toISOString()
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : 'http://localhost:3000')
+    const appUrl = getAppUrl()
 
     const { data: streamers } = await supabase
       .from('streamers')

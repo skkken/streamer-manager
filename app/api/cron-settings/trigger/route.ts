@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminAuth } from '@/lib/auth-guard'
 import { captureApiError } from '@/lib/error-logger'
+import { getAppUrl } from '@/lib/app-url'
 
 const VALID_JOBS = ['schedule-daily-checkin', 'worker-send-line']
 
@@ -20,11 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'CRON_SECRET が未設定です' }, { status: 500 })
     }
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : 'http://localhost:3000')
+    const appUrl = getAppUrl()
 
     const res = await fetch(`${appUrl}/api/cron/${job_key}`, {
       method: 'POST',

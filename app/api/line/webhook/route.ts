@@ -4,6 +4,7 @@ import { createHmac, timingSafeEqual } from 'crypto'
 import { getMessageSettings } from '@/lib/messages'
 import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
+import { getAppUrl } from '@/lib/app-url'
 /** LINE Reply API でメッセージを送信 */
 async function replyMessage(replyToken: string, text: string): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
@@ -118,11 +119,7 @@ export async function POST(req: NextRequest) {
               .is('used_at', null)
           }
 
-          const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL ??
-            (process.env.VERCEL_PROJECT_PRODUCTION_URL
-              ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-              : 'http://localhost:3000')
+          const appUrl = getAppUrl()
           const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
 
           const [, mm, dd] = today.split('-')

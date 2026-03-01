@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { requireAdminAuth } from '@/lib/auth-guard'
 import { inviteUserSchema, parseRequest } from '@/lib/validations'
 import { captureApiError } from '@/lib/error-logger'
+import { getAppUrl } from '@/lib/app-url'
 
 // GET /api/admin/users — ユーザー一覧
 export async function GET() {
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     const { data: userData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
       {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        redirectTo: `${getAppUrl()}/auth/callback`,
         data: { needs_password_setup: true },
       }
     )

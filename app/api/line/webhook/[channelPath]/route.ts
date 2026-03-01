@@ -6,6 +6,7 @@ import { generateToken, hashToken } from '@/lib/token'
 import { getJstDateString, getTokenExpiry } from '@/lib/jst'
 import { replyLineMessage, getLineDisplayName } from '@/lib/line'
 import { getLineChannelByWebhookPath } from '@/lib/line-channels'
+import { getAppUrl } from '@/lib/app-url'
 
 type Params = { params: Promise<{ channelPath: string }> }
 
@@ -94,11 +95,7 @@ export async function POST(req: NextRequest, { params }: Params) {
               .is('used_at', null)
           }
 
-          const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL ??
-            (process.env.VERCEL_PROJECT_PRODUCTION_URL
-              ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-              : 'http://localhost:3000')
+          const appUrl = getAppUrl()
           const checkinUrl = `${appUrl}/checkin?t=${rawToken}`
 
           const [, mm, dd] = today.split('-')
