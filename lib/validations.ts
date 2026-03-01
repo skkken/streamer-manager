@@ -44,10 +44,6 @@ export const updateStreamerSchema = z.object({
   notes: z.string().max(5000).nullable().optional(),
 })
 
-export const notifyToggleSchema = z.object({
-  notify_enabled: z.boolean({ message: 'notify_enabled は boolean が必須です' }),
-})
-
 // ============================================================
 // スタッフノート
 // ============================================================
@@ -85,12 +81,6 @@ export const selfCheckSubmitSchema = z.object({
 
 export const checkinVerifySchema = z.object({
   token: z.string().min(1, 'token は必須'),
-})
-
-export const checkinSubmitSchema = z.object({
-  token: z.string().min(1, 'token は必須'),
-  answers: z.record(z.string(), z.union([z.boolean(), z.string()])).optional().default({}),
-  memo: z.string().max(5000).nullable().optional(),
 })
 
 // ============================================================
